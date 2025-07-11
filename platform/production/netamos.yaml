@@ -3,11 +3,11 @@ kind: Application
 metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
-  name: app-engine
+  name: netamos
 spec:
   destination:
     name: in-cluster
-    namespace: app-engine
+    namespace: netamos
   project: default
   syncPolicy:
     automated:
@@ -25,14 +25,27 @@ spec:
       valuesObject:
         defaultPodOptions:
           restartPolicy: Always
-          labels:
-            istio.io/dataplane-mode: ambient
           hostNetwork: true
         controllers:
-          worker:
+          # TODO merge cloudlab controller and app-engine worker
+          cloudlab:
+            labels:
+              istio.io/dataplane-mode: ambient
             strategy: RollingUpdate
             containers:
-              app:
+              worker:
+                image:
+                  repository: docker.io/khuedoan/cloudlab
+                  tag: 03a609
+                env:
+                  TEMPORAL_HOST: temporal-frontend.temporal:7233
+                  TG_NON_INTERACTIVE: true
+          app-engine:
+            labels:
+              istio.io/dataplane-mode: ambient
+            strategy: RollingUpdate
+            containers:
+              worker:
                 image:
                   # TODO bootstrap and build itself
                   # repository: zot.zot.svc.cluster.local/khuedoan/app-engine
@@ -41,7 +54,7 @@ spec:
                   pullPolicy: Always
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
-                  REGISTRY: zot.zot.svc.cluster.local
+                  REGISTRY: registry.registry.svc.cluster.local
               docker:
                 image:
                   repository: docker.io/library/docker
@@ -49,12 +62,17 @@ spec:
                 command:
                   - dockerd
                   - --host=unix:///var/run/docker.sock
-                  - --insecure-registry=zot.zot.svc.cluster.local
+                  - --insecure-registry=registry.registry.svc.cluster.local
                 securityContext:
                   privileged: true
         persistence:
           socket:
             type: emptyDir
-            globalMounts:
-              - path: /var/run
-                subPath: docker.sock
+            advancedMounts:
+              app-engine:
+                worker:
+                  - path: /var/run
+                    subPath: docker.sock
+                docker:
+                  - path: /var/run
+                    subPath: docker.sock
