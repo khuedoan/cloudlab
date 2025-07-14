@@ -1,5 +1,5 @@
 .POSIX:
-.PHONY: default compose infra platform apps test update
+.PHONY: default compose infra platform apps test fmt tidy update
 
 env ?= local
 
@@ -50,6 +50,9 @@ fmt:
 	cd controller && go fmt ./...
 	cd infra/modules/tfstate && go fmt ./...
 	cd test && go fmt ./...
+
+tidy: fmt
+	cd infra && terragrunt init --backend=false --lock=false --all
 
 update:
 	nix flake update

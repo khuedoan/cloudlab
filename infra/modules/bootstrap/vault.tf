@@ -67,7 +67,7 @@ resource "kubectl_manifest" "vault" {
                   ]
                 }]
                 tls = [{
-                  hosts = ["vault.${var.cluster_domain}"]
+                  hosts      = ["vault.${var.cluster_domain}"]
                   secretName = "vault-tls-certificate"
                 }]
               }
