@@ -8,23 +8,13 @@ default: infra platform apps
 compose:
 	docker compose up --build --detach
 
-infra: compose
-	# TODO multiple env
-	@temporal workflow start \
-		--workflow-id infra-manual \
-		--task-queue cloudlab \
-		--type Infra \
-		--input '{ "url": "/usr/local/src/cloudlab", "revision": "master", "stack": "local" }'
-	@temporal workflow result --workflow-id infra-manual
+infra:
+	cd infra/${env} && terragrunt apply --all
+
 
 platform:
-	# TODO multiple env
-	@temporal workflow start \
-		--workflow-id platform-manual \
-		--task-queue cloudlab \
-		--type Platform \
-		--input '{ "url": "/usr/local/src/cloudlab", "revision": "master", "registry": "registry.127.0.0.1.sslip.io", "cluster": "local" }'
-	@temporal workflow result --workflow-id platform-manual
+	# TODO don't hard code registry
+	cd platform/${env} && oras push --format=json docker.io/khuedoan/platform-manifests:${env} .
 
 apps:
 	# TODO multiple env
