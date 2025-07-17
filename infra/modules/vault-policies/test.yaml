@@ -1,0 +1,42 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-database
+  namespace: default
+spec:
+  provider: vault
+  parameters:
+    vaultAddress: "http://vault-openbao.vault.svc.cluster.internal:8200"
+    roleName: "database"
+    objects: |
+      - objectName: "db-password"
+        secretPath: "secret/data/db-pass"
+        secretKey: "password"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  namespace: default
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: webapp
+  namespace: default
+spec:
+  serviceAccountName: webapp-sa
+  containers:
+  - image: stefanprodan/podinfo
+    name: webapp
+    volumeMounts:
+    - name: secrets-store-inline
+      mountPath: "/mnt/secrets-store"
+      readOnly: true
+  volumes:
+    - name: secrets-store-inline
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: "vault-database"
