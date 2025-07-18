@@ -11,7 +11,6 @@ compose:
 infra:
 	cd infra/${env} && terragrunt apply --all
 
-
 platform:
 	# TODO don't hard code registry
 	cd platform/${env} && oras push --format=json docker.io/khuedoan/platform-manifests:${env} .

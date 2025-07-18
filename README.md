@@ -29,7 +29,7 @@
 │       │       └── ${MODULE}
 │       │           └── terragrunt.hcl
 │       ├── metal
-│       │   └── vn-south-1
+│       │   └── vn-southeast-1
 │       │       ├── bootstrap
 │       │       │   └── terragrunt.hcl
 │       │       └── cluster
