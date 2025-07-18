@@ -7,10 +7,10 @@ spec:
   provider: vault
   parameters:
     vaultAddress: "http://vault-openbao.vault.svc.cluster.internal:8200"
-    roleName: "database"
+    roleName: "kubernetes-default"
     objects: |
       - objectName: "db-password"
-        secretPath: "secret/data/db-pass"
+        secretPath: "secret/data/default/webapp-sa"
         secretKey: "password"
 ---
 apiVersion: v1
@@ -27,12 +27,12 @@ metadata:
 spec:
   serviceAccountName: webapp-sa
   containers:
-  - image: stefanprodan/podinfo
-    name: webapp
-    volumeMounts:
-    - name: secrets-store-inline
-      mountPath: "/mnt/secrets-store"
-      readOnly: true
+    - image: stefanprodan/podinfo
+      name: webapp
+      volumeMounts:
+        - name: secrets-store-inline
+          mountPath: "/mnt/secrets"
+          readOnly: true
   volumes:
     - name: secrets-store-inline
       csi:

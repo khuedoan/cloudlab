@@ -15,27 +15,39 @@ resource "vault_mount" "secret" {
   type = "kv-v2"
 }
 
-resource "vault_kubernetes_auth_backend_config" "k8s" {
+resource "vault_kubernetes_auth_backend_config" "kubernetes" {
   backend         = vault_auth_backend.kubernetes.path
   kubernetes_host = "https://kubernetes.default.svc.cluster.local"
 }
+
+########
+# User #
+########
+
+# TODO remove, just testing
+# resource "vault_generic_endpoint" "khuedoan" {
+#   path                 = "auth/${vault_auth_backend.userpass.path}/users/khuedoan"
+#   ignore_absent_fields = true
+#   data_json = jsonencode({
+#     token_policies = [
+#       "default",
+#     ],
+#     password = "testing"
+#   })
+# }
 
 #############
 # App level #
 #############
 
-resource "vault_policy" "internal_app" {
-  name   = "internal-app"
-  policy = <<EOT
-path "secret/data/db-pass" {
-  capabilities = ["read"]
+# TODO remove, just testing
+resource "vault_policy" "kubernetes_default" {
+  name   = "kubernetes-default"
+  policy = file("${path.module}/policies/kubernetes_default.hcl")
 }
-EOT
-}
-
-resource "vault_kubernetes_auth_backend_role" "database" {
+resource "vault_kubernetes_auth_backend_role" "kubernetes_default" {
   backend   = vault_auth_backend.kubernetes.path
-  role_name = "database"
+  role_name = "kubernetes-default"
   bound_service_account_names = [
     "webapp-sa"
   ]
@@ -44,15 +56,15 @@ resource "vault_kubernetes_auth_backend_role" "database" {
   ]
   token_ttl = 60 * 20
   token_policies = [
-    vault_policy.internal_app.name
+    vault_policy.kubernetes_default.name
   ]
 }
 
-# TODO remove, just testing
-resource "vault_generic_secret" "example" {
-  path = "${vault_mount.secret.path}/db-pass"
+resource "vault_kv_secret_v2" "db-pass" {
+  mount = vault_mount.secret.path
+  name  = "default/webapp-sa"
 
   data_json = jsonencode({
-    "password":   "db-secret-password",
+    password = "db-secret-password"
   })
 }
