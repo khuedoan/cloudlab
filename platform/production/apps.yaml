@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - list:
+        elements:
+          - namespace: test
+            app: example
+          # - namespace: khuedoan
+          #   app: blog
+          # - namespace: khuedoan
+          #   app: notes
+          # - namespace: khuedoan
+          #   app: homelab-docs
+          # - namespace: finance
+          #   app: actualbudget
+  template:
+    metadata:
+      name: '{{.namespace}}-{{.app}}'
+    spec:
+      project: default # TODO
+      destination:
+        name: in-cluster
+        namespace: '{{.namespace}}'
+      source:
+        repoURL: 'oci://registry.cloudlab.khuedoan.com/{{.namespace}}/{{.app}}'
+        targetRevision: production
+        path: '.'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - ServerSideApply=true
