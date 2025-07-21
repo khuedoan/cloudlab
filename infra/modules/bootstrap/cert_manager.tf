@@ -25,6 +25,14 @@ resource "kubectl_manifest" "cert_manager" {
             crds = {
               enabled = true
             }
+            config = {
+              featureGates = {
+                # Disable the use of Exact PathType in Ingress resources, to work
+                # around a bug in ingress-nginx
+                # https://github.com/kubernetes/ingress-nginx/issues/11176
+                ACMEHTTP01IngressPathTypeExact = false
+              }
+            }
           }
         }
       }
