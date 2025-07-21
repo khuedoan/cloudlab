@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  name: forgejo
+spec:
+  destination:
+    name: in-cluster
+    namespace: forgejo
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+  source:
+    repoURL: code.forgejo.org/forgejo-helm
+    chart: forgejo
+    targetRevision: 13.0.0
+    helm:
+      valuesObject:
+        strategy:
+          type: Recreate
+        gitea:
+          config:
+            database:
+              DB_TYPE: sqlite3
+            session:
+              PROVIDER: memory
+            cache:
+              ADAPTER: memory
+            queue:
+              TYPE: level
+            server:
+              LANDING_PAGE: explore
+              ROOT_URL: https://code.cloudlab.khuedoan.com
+              OFFLINE_MODE: true
+            repository:
+              DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages
+              DISABLE_STARS: true
+              DEFAULT_BRANCH: master
+            oauth2_client:
+              ENABLE_AUTO_REGISTRATION: true
+              OPENID_CONNECT_SCOPES: "email profile"
+              USERNAME: username
+            "service.explore":
+              DISABLE_USERS_PAGE: true
+            actions:
+              ENABLED: false
+            webhook:
+              ALLOWED_HOST_LIST: "private"
+          podAnnotations:
+            "istio.io/dataplane-mode": "ambient"
+        ingress:
+          enabled: true
+          className: nginx
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+          hosts:
+            - host: code.cloudlab.khuedoan.com
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - hosts:
+                - code.cloudlab.khuedoan.com
+              secretName: forgejo-tls-certificate
+        valkey-cluster:
+          enabled: false
+        valkey:
+          enabled: false
+        postgresql:
+          enabled: false
+        postgresql-ha:
+          enabled: false
