@@ -11,14 +11,14 @@ spec:
         elements:
           - namespace: test
             app: example
-          # - namespace: khuedoan
-          #   app: blog
-          # - namespace: khuedoan
-          #   app: notes
-          # - namespace: khuedoan
-          #   app: homelab-docs
-          # - namespace: finance
-          #   app: actualbudget
+            # - namespace: khuedoan
+            #   app: blog
+            # - namespace: khuedoan
+            #   app: notes
+            # - namespace: khuedoan
+            #   app: homelab-docs
+            # - namespace: finance
+            #   app: actualbudget
   template:
     metadata:
       name: '{{.namespace}}-{{.app}}'
