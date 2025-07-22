@@ -25,6 +25,10 @@ inputs = {
     dex_grafana_client_secret  = { random = true }
     dex_kiali_client_secret    = { random = true }
     dex_temporal_client_secret = { random = true }
+    dex_forgejo_client_key     = { value = "forgejo" }
+    dex_forgejo_client_secret  = { random = true }
+    forgejo_admin_username     = { value = "forgejo_admin" }
+    forgejo_admin_password     = { random = true }
     silverbullet_user          = { value = include.root.locals.secrets.silverbullet_user }
     wireguard_config           = { value = include.root.locals.secrets.wireguard_config }
   }
@@ -36,6 +40,7 @@ inputs = {
         "GRAFANA_CLIENT_SECRET"  = "dex_grafana_client_secret"
         "KIALI_CLIENT_SECRET"    = "dex_kiali_client_secret"
         "TEMPORAL_CLIENT_SECRET" = "dex_temporal_client_secret"
+        "FORGEJO_CLIENT_SECRET"  = "dex_forgejo_client_secret"
         "ADMIN_PASSWORD_HASH"    = "dex_admin_password_hash"
       }
     }
@@ -67,6 +72,18 @@ inputs = {
     "wireguard/wireguard-secret" = {
       data = {
         "wg0.conf" = "wireguard_config"
+      }
+    }
+    "forgejo/forgejo-admin" = {
+      data = {
+        "username" = "forgejo_admin_username"
+        "password" = "forgejo_admin_password"
+      }
+    }
+    "forgejo/forgejo-oauth" = {
+      data = {
+        "key"    = "dex_forgejo_client_key"
+        "secret" = "dex_forgejo_client_secret"
       }
     }
   }

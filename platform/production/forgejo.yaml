@@ -47,6 +47,9 @@ spec:
               ENABLE_AUTO_REGISTRATION: true
               OPENID_CONNECT_SCOPES: "email profile"
               USERNAME: username
+            service:
+              ENABLE_INTERNAL_SIGNIN: false
+              ALLOW_ONLY_EXTERNAL_REGISTRATION: true
             "service.explore":
               DISABLE_USERS_PAGE: true
             actions:
@@ -57,6 +60,14 @@ spec:
               SHOW_FOOTER_VERSION: false
               SHOW_FOOTER_TEMPLATE_LOAD_TIME: false
               SHOW_FOOTER_POWERED_BY: false
+          oauth:
+            - name: SSO
+              provider: 'openidConnect'
+              autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
+              existingSecret: forgejo-oauth
+          admin:
+            email: admin@cloudlab.khuedoan.com
+            existingSecret: forgejo-admin
           podAnnotations:
             "istio.io/dataplane-mode": "ambient"
         ingress:

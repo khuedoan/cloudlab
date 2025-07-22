@@ -59,6 +59,11 @@ spec:
               redirectURIs:
                 - 'https://temporal.cloudlab.khuedoan.com/auth/sso/callback'
               secretEnv: TEMPORAL_CLIENT_SECRET
+            - id: forgejo
+              name: Forgejo
+              redirectURIs:
+                - 'https://code.khuedoan.com/user/oauth2/SSO/callback'
+              secretEnv: FORGEJO_CLIENT_SECRET
         envFrom:
           - secretRef:
               name: dex-secrets
