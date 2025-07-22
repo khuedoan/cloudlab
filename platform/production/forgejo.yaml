@@ -37,7 +37,7 @@ spec:
               TYPE: level
             server:
               LANDING_PAGE: explore
-              ROOT_URL: https://code.cloudlab.khuedoan.com
+              ROOT_URL: https://code.khuedoan.com
               OFFLINE_MODE: true
             repository:
               DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages
@@ -60,14 +60,15 @@ spec:
           className: nginx
           annotations:
             cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/proxy-body-size: "0"
           hosts:
-            - host: code.cloudlab.khuedoan.com
+            - host: code.khuedoan.com
               paths:
                 - path: /
                   pathType: Prefix
           tls:
             - hosts:
-                - code.cloudlab.khuedoan.com
+                - code.khuedoan.com
               secretName: forgejo-tls-certificate
         valkey-cluster:
           enabled: false
