@@ -53,6 +53,10 @@ spec:
               ENABLED: false
             webhook:
               ALLOWED_HOST_LIST: "private"
+            other:
+              SHOW_FOOTER_VERSION: false
+              SHOW_FOOTER_TEMPLATE_LOAD_TIME: false
+              SHOW_FOOTER_POWERED_BY: false
           podAnnotations:
             "istio.io/dataplane-mode": "ambient"
         ingress:
