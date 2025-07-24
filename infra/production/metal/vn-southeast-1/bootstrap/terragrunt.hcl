@@ -10,7 +10,7 @@ dependency "cluster" {
 }
 
 terraform {
-  source = "../../../../modules//empty"
+  source = "../../../../.modules//empty"
 }
 
 inputs = {}

@@ -31,13 +31,13 @@ test:
 fmt:
 	nixfmt flake.nix
 	yamlfmt \
-		--exclude infra/modules/cluster/roles/secrets/vars/main.yml \
+		--exclude infra/.modules/cluster/roles/secrets/vars/main.yml \
 		--exclude infra/*/secrets.yaml \
 		.
 	terragrunt hcl format
 	tofu fmt -recursive
 	cd controller && go fmt ./...
-	cd infra/modules/tfstate && go fmt ./...
+	cd infra/.modules/tfstate && go fmt ./...
 	cd test && go fmt ./...
 
 tidy: fmt

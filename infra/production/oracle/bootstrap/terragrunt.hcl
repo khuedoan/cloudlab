@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules//bootstrap"
+  source = "../../../.modules//bootstrap"
 }
 
 dependency "cluster" {

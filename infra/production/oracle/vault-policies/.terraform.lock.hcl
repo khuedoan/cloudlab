@@ -4,6 +4,7 @@
 provider "registry.opentofu.org/hashicorp/oci" {
   version = "7.10.0"
   hashes = [
+    "h1:XMhePV+ntXrfaI0Yq7mTCgziQ2YJzvt4x1SzcjDh754=",
     "h1:fte2iarPJxuqm8S5AJTgY/eEQnH6LS/qVRxmDkBie4s=",
     "zh:03ad7ab20c4aa4a496cedb29cc439cb6e6c6eadcce964a44c227d605a30aec0f",
     "zh:08184bf3df20ab6f2bc764f28cefc356090d34bdf02c41ab91939d91f7462c3c",
@@ -27,6 +28,7 @@ provider "registry.opentofu.org/hashicorp/vault" {
   version     = "5.1.0"
   constraints = "~> 5.1.0"
   hashes = [
+    "h1:HowJiGUcCWi5ehR57XUeObOF94CT1wFco7JTuZzycr4=",
     "h1:s1muvkI/r+MsuA3nzENAPPO/U+Q6rhXqpcScxDpUgFo=",
     "zh:014bb39a4987b0f89cadb764912f868f5da9e7696e6086ea62031ae221e60450",
     "zh:03e57b259ca3d546704775c1ec5fa47818bcb25dfadee6f7ef64eb43fa203894",

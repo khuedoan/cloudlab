@@ -4,7 +4,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules//secrets"
+  source = "../../../.modules//secrets"
 }
 
 dependency "cluster" {

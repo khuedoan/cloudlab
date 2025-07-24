@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules//vault-policies"
+  source = "../../../.modules//vault-policies"
 }
 
 # TODO wait for Vault API or unseal hook
