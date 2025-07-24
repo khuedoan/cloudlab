@@ -23,6 +23,7 @@
               age
               ansible
               ansible-lint
+              fzf
               gnumake
               go
               k3d

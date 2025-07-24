@@ -1,7 +1,7 @@
 .POSIX:
 .PHONY: default compose infra platform apps test fmt tidy update
 
-env ?= local
+env ?= $(shell ls infra | fzf --prompt "Select environment: ")
 
 default: infra platform apps
 
