@@ -21,6 +21,7 @@ inputs = {
 
   sources = {
     dex_admin_password_hash    = { value = include.root.locals.secrets.dex_admin_password_hash }
+    dex_khuedoan_password_hash = { value = include.root.locals.secrets.dex_khuedoan_password_hash }
     dex_argocd_client_secret   = { random = true }
     dex_grafana_client_secret  = { random = true }
     dex_kiali_client_secret    = { random = true }
@@ -42,6 +43,7 @@ inputs = {
         "TEMPORAL_CLIENT_SECRET" = "dex_temporal_client_secret"
         "FORGEJO_CLIENT_SECRET"  = "dex_forgejo_client_secret"
         "ADMIN_PASSWORD_HASH"    = "dex_admin_password_hash"
+        "KHUEDOAN_PASSWORD_HASH" = "dex_khuedoan_password_hash"
       }
     }
     "argocd/argocd-secrets" = {
