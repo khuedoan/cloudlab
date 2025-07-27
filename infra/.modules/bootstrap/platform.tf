@@ -17,7 +17,9 @@ resource "kubectl_manifest" "platform" {
       }
       syncPolicy = local.sync_policy
       source = {
-        repoURL        = "oci://registry.${var.cluster_domain}/platform" # TODO use registry var
+        # TODO switch to internal registry
+        # repoURL        = "oci://registry.${var.cluster_domain}/platform"
+        repoURL        = "oci://docker.io/khuedoan/platform-manifests"
         targetRevision = var.cluster
         path           = "."
       }
