@@ -123,3 +123,148 @@ resource "kubectl_manifest" "istiod" {
     }
   })
 }
+
+resource "kubectl_manifest" "istio_addons" {
+  server_side_apply = true
+  yaml_body = yamlencode({
+    apiVersion = "argoproj.io/v1alpha1"
+    kind       = "Application"
+    metadata = {
+      name       = "istio-addons"
+      namespace  = helm_release.argocd.namespace
+      finalizers = ["resources-finalizer.argocd.argoproj.io"]
+      labels     = local.common_labels
+    }
+    spec = {
+      project = "default"
+      destination = {
+        name      = "in-cluster"
+        namespace = "istio-system"
+      }
+      syncPolicy = local.sync_policy
+      source = {
+        repoURL        = "https://bjw-s-labs.github.io/helm-charts"
+        chart          = "app-template"
+        targetRevision = "3.7.3"
+        helm = {
+          valuesObject = {
+            rawResources = {
+              # From https://github.com/istio/istio/blob/master/samples/addons/extras/prometheus-operator.yaml
+              component-monitor = {
+                apiVersion = "monitoring.coreos.com/v1"
+                kind = "ServiceMonitor"
+                spec = {
+                  spec = {
+                    endpoints = [
+                      {
+                        interval = "15s"
+                        port = "http-monitoring"
+                      },
+                    ]
+                    jobLabel = "istio"
+                    namespaceSelector = {
+                      "any" = true
+                    }
+                    selector = {
+                      matchExpressions = [
+                        {
+                          key = "istio"
+                          operator = "In"
+                          values = [
+                            "pilot",
+                          ]
+                        },
+                      ]
+                    }
+                    targetLabels = [
+                      "app",
+                    ]
+                  }
+                }
+              }
+              envoy-stats-monitor = {
+                apiVersion = "monitoring.coreos.com/v1"
+                kind = "PodMonitor"
+                spec = {
+                  spec = {
+                    jobLabel = "envoy-stats"
+                    namespaceSelector = {
+                      "any" = true
+                    }
+                    podMetricsEndpoints = [
+                      {
+                        interval = "15s"
+                        path = "/stats/prometheus"
+                        relabelings = [
+                          {
+                            action = "keep"
+                            regex = "istio-proxy"
+                            sourceLabels = [
+                              "__meta_kubernetes_pod_container_name",
+                            ]
+                          },
+                          {
+                            action = "keep"
+                            sourceLabels = [
+                              "__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape",
+                            ]
+                          },
+                          {
+                            action = "replace"
+                            regex = "(\\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})"
+                            replacement = "[$2]:$1"
+                            sourceLabels = [
+                              "__meta_kubernetes_pod_annotation_prometheus_io_port",
+                              "__meta_kubernetes_pod_ip",
+                            ]
+                            targetLabel = "__address__"
+                          },
+                          {
+                            action = "replace"
+                            regex = "(\\d+);((([0-9]+?)(\\.|$)){4})"
+                            replacement = "$2:$1"
+                            sourceLabels = [
+                              "__meta_kubernetes_pod_annotation_prometheus_io_port",
+                              "__meta_kubernetes_pod_ip",
+                            ]
+                            targetLabel = "__address__"
+                          },
+                          {
+                            action = "labeldrop"
+                            regex = "__meta_kubernetes_pod_label_(.+)"
+                          },
+                          {
+                            action = "replace"
+                            sourceLabels = [
+                              "__meta_kubernetes_namespace",
+                            ]
+                            targetLabel = "namespace"
+                          },
+                          {
+                            action = "replace"
+                            sourceLabels = [
+                              "__meta_kubernetes_pod_name",
+                            ]
+                            targetLabel = "pod"
+                          },
+                        ]
+                      },
+                    ]
+                    selector = {
+                      matchExpressions = [
+                        {
+                          key = "istio-prometheus-ignore"
+                          operator = "DoesNotExist"
+                        },
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+}
