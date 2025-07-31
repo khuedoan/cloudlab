@@ -46,7 +46,7 @@ inputs = {
         "KHUEDOAN_PASSWORD_HASH" = "dex_khuedoan_password_hash"
       }
     }
-    "argocd/argocd-secrets" = {
+    "argocd/argocd-secret" = {
       data = {
         "oidc.dex.clientSecret" = "dex_argocd_client_secret"
       }
