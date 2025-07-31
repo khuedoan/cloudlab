@@ -19,29 +19,27 @@ resource "kubectl_manifest" "prometheus" {
       source = {
         repoURL        = "https://prometheus-community.github.io/helm-charts"
         chart          = "kube-prometheus-stack"
-        targetRevision = "72.0.1"
+        targetRevision = "75.15.1"
         helm = {
           valuesObject = {
-            valuesObject = {
-              grafana = {
-                additionalDataSources = [
-                  {
-                    name = "Loki"
-                    type = "loki"
-                    url  = "http://loki:3100"
-                  },
-                ]
-                enabled                = false
-                forceDeployDashboards  = true
-                forceDeployDatasources = true
-              }
-              prometheus = {
-                prometheusSpec = {
-                  podMonitorSelectorNilUsesHelmValues     = false
-                  probeSelectorNilUsesHelmValues          = false
-                  ruleSelectorNilUsesHelmValues           = false
-                  serviceMonitorSelectorNilUsesHelmValues = false
-                }
+            grafana = {
+              additionalDataSources = [
+                {
+                  name = "Loki"
+                  type = "loki"
+                  url  = "http://loki:3100"
+                },
+              ]
+              enabled                = false
+              forceDeployDashboards  = true
+              forceDeployDatasources = true
+            }
+            prometheus = {
+              prometheusSpec = {
+                podMonitorSelectorNilUsesHelmValues     = false
+                probeSelectorNilUsesHelmValues          = false
+                ruleSelectorNilUsesHelmValues           = false
+                serviceMonitorSelectorNilUsesHelmValues = false
               }
             }
           }
