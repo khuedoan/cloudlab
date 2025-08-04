@@ -70,6 +70,11 @@ spec:
               redirectURIs:
                 - 'https://code.khuedoan.com/user/oauth2/SSO/callback'
               secretEnv: FORGEJO_CLIENT_SECRET
+            - id: wireguard
+              name: WireGuard
+              redirectURIs:
+                - 'https://wireguard.cloudlab.khuedoan.com/api/v0/auth/login/sso/callback'
+              secretEnv: WIREGUARD_CLIENT_SECRET
         envFrom:
           - secretRef:
               name: dex-secrets

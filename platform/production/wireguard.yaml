@@ -23,8 +23,30 @@ spec:
     helm:
       valuesObject:
         config:
+          core:
+            create_default_peer: true
           web:
             external_url: https://wireguard.cloudlab.khuedoan.com
+          auth:
+            hide_login_form: true
+            oidc:
+              - id: sso
+                provider_name: sso
+                display_name: Login with SSO
+                registration_enabled: true
+                base_url: https://dex.cloudlab.khuedoan.com
+                client_id: wireguard
+                client_secret: $SSO_CLIENT_SECRET
+                extra_scopes:
+                  - profile
+                  - email
+                field_map:
+                  is_admin: email
+                admin_mapping:
+                  admin_value_regex: ^admin@cloudlab.khuedoan.com$
+        envFrom:
+          - secretRef:
+              name: wireguard-secret
         ingress:
           enabled: true
           className: nginx
