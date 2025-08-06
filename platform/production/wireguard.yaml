@@ -25,6 +25,7 @@ spec:
         config:
           core:
             create_default_peer: true
+            self_provisioning_allowed: true
           web:
             external_url: https://wireguard.cloudlab.khuedoan.com
           auth:
