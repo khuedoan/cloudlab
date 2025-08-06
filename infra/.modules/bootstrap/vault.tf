@@ -25,6 +25,40 @@ resource "kubectl_manifest" "vault_operator" {
   })
 }
 
+resource "kubectl_manifest" "vault_secrets_webhook" {
+  server_side_apply = true
+  yaml_body = yamlencode({
+    apiVersion = "argoproj.io/v1alpha1"
+    kind       = "Application"
+    metadata = {
+      name       = "vault-secrets-webhook"
+      namespace  = helm_release.argocd.namespace
+      finalizers = ["resources-finalizer.argocd.argoproj.io"]
+      labels     = local.common_labels
+    }
+    spec = {
+      project = "default"
+      destination = {
+        name      = "in-cluster"
+        namespace = "vault"
+      }
+      syncPolicy = local.sync_policy
+      source = {
+        repoURL        = "ghcr.io"
+        chart          = "bank-vaults/helm-charts/vault-secrets-webhook"
+        targetRevision = "1.22.0"
+        helm = {
+          valuesObject = {
+            env = {
+              VAULT_ADDR = "http://vault-cluster.vault.svc.cluster.local:8200"
+            }
+          }
+        }
+      }
+    }
+  })
+}
+
 resource "kubectl_manifest" "vault" {
   server_side_apply = true
   yaml_body = yamlencode({
@@ -76,6 +110,39 @@ resource "kubectl_manifest" "vault" {
                       kubernetes = {
                         secretNamespace = "{{ .Release.Namespace }}"
                       }
+                    }
+                    externalConfig = {
+                      secrets = [
+                        {
+                          path = "secret"
+                          type = "kv"
+                          options = {
+                            version = 2
+                          }
+                        }
+                      ]
+                      policies = [
+                        {
+                          name = "allow_secrets"
+                          # TODO make it less ugly
+                          rules = file("${path.module}/vault-policies/allow_secrets.hcl")
+                        }
+                      ]
+                      auth = [
+                        {
+                          type = "kubernetes"
+                          roles = [
+                            {
+                              # TODO optimize this
+                              name = "default"
+                              bound_service_account_names: ["default"]
+                              bound_service_account_namespaces: ["default"]
+                              policies: ["allow_secrets"]
+                              ttl: "1h"
+                            }
+                          ]
+                        }
+                      ]
                     }
                     volumes = [{
                       name = "vault-data"
