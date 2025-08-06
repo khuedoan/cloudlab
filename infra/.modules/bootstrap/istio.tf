@@ -152,13 +152,13 @@ resource "kubectl_manifest" "istio_addons" {
               # From https://github.com/istio/istio/blob/master/samples/addons/extras/prometheus-operator.yaml
               component-monitor = {
                 apiVersion = "monitoring.coreos.com/v1"
-                kind = "ServiceMonitor"
+                kind       = "ServiceMonitor"
                 spec = {
                   spec = {
                     endpoints = [
                       {
                         interval = "15s"
-                        port = "http-monitoring"
+                        port     = "http-monitoring"
                       },
                     ]
                     jobLabel = "istio"
@@ -168,7 +168,7 @@ resource "kubectl_manifest" "istio_addons" {
                     selector = {
                       matchExpressions = [
                         {
-                          key = "istio"
+                          key      = "istio"
                           operator = "In"
                           values = [
                             "pilot",
@@ -184,7 +184,7 @@ resource "kubectl_manifest" "istio_addons" {
               }
               envoy-stats-monitor = {
                 apiVersion = "monitoring.coreos.com/v1"
-                kind = "PodMonitor"
+                kind       = "PodMonitor"
                 spec = {
                   spec = {
                     jobLabel = "envoy-stats"
@@ -194,11 +194,11 @@ resource "kubectl_manifest" "istio_addons" {
                     podMetricsEndpoints = [
                       {
                         interval = "15s"
-                        path = "/stats/prometheus"
+                        path     = "/stats/prometheus"
                         relabelings = [
                           {
                             action = "keep"
-                            regex = "istio-proxy"
+                            regex  = "istio-proxy"
                             sourceLabels = [
                               "__meta_kubernetes_pod_container_name",
                             ]
@@ -210,8 +210,8 @@ resource "kubectl_manifest" "istio_addons" {
                             ]
                           },
                           {
-                            action = "replace"
-                            regex = "(\\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})"
+                            action      = "replace"
+                            regex       = "(\\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})"
                             replacement = "[$2]:$1"
                             sourceLabels = [
                               "__meta_kubernetes_pod_annotation_prometheus_io_port",
@@ -220,8 +220,8 @@ resource "kubectl_manifest" "istio_addons" {
                             targetLabel = "__address__"
                           },
                           {
-                            action = "replace"
-                            regex = "(\\d+);((([0-9]+?)(\\.|$)){4})"
+                            action      = "replace"
+                            regex       = "(\\d+);((([0-9]+?)(\\.|$)){4})"
                             replacement = "$2:$1"
                             sourceLabels = [
                               "__meta_kubernetes_pod_annotation_prometheus_io_port",
@@ -231,7 +231,7 @@ resource "kubectl_manifest" "istio_addons" {
                           },
                           {
                             action = "labeldrop"
-                            regex = "__meta_kubernetes_pod_label_(.+)"
+                            regex  = "__meta_kubernetes_pod_label_(.+)"
                           },
                           {
                             action = "replace"
@@ -253,7 +253,7 @@ resource "kubectl_manifest" "istio_addons" {
                     selector = {
                       matchExpressions = [
                         {
-                          key = "istio-prometheus-ignore"
+                          key      = "istio-prometheus-ignore"
                           operator = "DoesNotExist"
                         },
                       ]
