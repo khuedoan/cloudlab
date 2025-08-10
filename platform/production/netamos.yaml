@@ -27,30 +27,33 @@ spec:
           restartPolicy: Always
           hostNetwork: true
         controllers:
-          # TODO merge cloudlab controller and app-engine worker
-          cloudlab:
+          server:
             labels:
               istio.io/dataplane-mode: ambient
             strategy: RollingUpdate
             containers:
-              worker:
-                image:
-                  repository: docker.io/khuedoan/cloudlab
-                  tag: 03a609
-                env:
-                  TEMPORAL_HOST: temporal-frontend.temporal:7233
-                  TG_NON_INTERACTIVE: true
-          app-engine:
-            labels:
-              istio.io/dataplane-mode: ambient
-            strategy: RollingUpdate
-            containers:
-              worker:
+              app:
                 image:
                   # TODO bootstrap and build itself
-                  # repository: zot.zot.svc.cluster.local/khuedoan/app-engine
-                  repository: docker.io/khuedoan/app-engine
-                  tag: 4118f906ab07a17f3dac608f1a690b2215e4d2a5
+                  # repository: zot.zot.svc.cluster.local/khuedoan/platform-engine
+                  repository: docker.io/khuedoan/platform-engine
+                  tag: de634ba
+                  pullPolicy: Always
+                command:
+                  - /usr/local/bin/server
+                env:
+                  TEMPORAL_URL: http://temporal-frontend.temporal:7233
+          worker:
+            labels:
+              istio.io/dataplane-mode: ambient
+            strategy: RollingUpdate
+            containers:
+              app:
+                image:
+                  # TODO bootstrap and build itself
+                  # repository: zot.zot.svc.cluster.local/khuedoan/platform-engine
+                  repository: docker.io/khuedoan/platform-engine
+                  tag: de634ba
                   pullPolicy: Always
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
@@ -65,12 +68,19 @@ spec:
                   - --insecure-registry=registry.registry.svc.cluster.local
                 securityContext:
                   privileged: true
+        service:
+          server:
+            controller: server
+            ports:
+              http:
+                port: 8080
+                protocol: HTTP
         persistence:
           socket:
             type: emptyDir
             advancedMounts:
-              app-engine:
-                worker:
+              worker:
+                app:
                   - path: /var/run
                     subPath: docker.sock
                 docker:
