@@ -8,7 +8,7 @@ controllers:
     containers:
       main:
         image:
-          repository: docker.io/khuedoan/blog
+          repository: registry.registry.svc.cluster.local/khuedoan/blog
           tag: 6fbd90b77a81e0bcb330fddaa230feff744a7010
 service:
   main:
