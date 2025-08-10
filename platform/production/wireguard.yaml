@@ -22,6 +22,9 @@ spec:
     targetRevision: 0.7.1
     helm:
       valuesObject:
+        # TODO remove tag override when new version is released with hide_login_form
+        image:
+          tag: "master@sha256:75b0a5476fddce6a9a4a2d75fd4e5af914e8c51b754c7ac55f72c9ca5451850d"
         config:
           core:
             create_default_peer: true
@@ -30,6 +33,9 @@ spec:
             external_url: https://wireguard.cloudlab.khuedoan.com
           auth:
             hide_login_form: true
+            # Disable passkey to enforce OIDC
+            webauthn:
+              enabled: false
             oidc:
               - id: sso
                 provider_name: sso
