@@ -25,7 +25,6 @@ spec:
       valuesObject:
         defaultPodOptions:
           restartPolicy: Always
-          hostNetwork: true
         controllers:
           server:
             labels:
@@ -34,30 +33,38 @@ spec:
             containers:
               app:
                 image:
-                  # TODO bootstrap and build itself
-                  # repository: zot.zot.svc.cluster.local/khuedoan/platform-engine
-                  repository: docker.io/khuedoan/platform-engine
-                  tag: de634ba
+                  # TODO switch to netamos
+                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+                  tag: 59357edcdb7a5888d6fbc83532c5a15ad05486f5
                   pullPolicy: Always
                 command:
                   - /usr/local/bin/server
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
+                  GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
+                  GITOPS_REVISION: master
+                  REGISTRY: registry.registry.svc.cluster.local:80
           worker:
             labels:
               istio.io/dataplane-mode: ambient
             strategy: RollingUpdate
+            pod:
+              hostNetwork: true # TODO ???
             containers:
               app:
                 image:
-                  # TODO bootstrap and build itself
-                  # repository: zot.zot.svc.cluster.local/khuedoan/platform-engine
-                  repository: docker.io/khuedoan/platform-engine
-                  tag: de634ba
+                  # TODO switch to netamos
+                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+                  tag: 59357edcdb7a5888d6fbc83532c5a15ad05486f5
                   pullPolicy: Always
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
                   REGISTRY: registry.registry.svc.cluster.local
+                  GIT_USER: Bot
+                  GIT_EMAIL: bot@cloudlab.khuedoan.com
+                  GIT_USERNAME: khuedoan
+                  # TODO generate this automatically
+                  GIT_PASSWORD: vault:secret/data/demosecret/forgejo#PASSWORD
               docker:
                 image:
                   repository: docker.io/library/docker
