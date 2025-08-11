@@ -11,8 +11,8 @@ spec:
         elements:
           - namespace: test
             app: example
-            # - namespace: khuedoan
-            #   app: blog
+          - namespace: khuedoan
+            app: blog
             # - namespace: khuedoan
             #   app: notes
             # - namespace: khuedoan
@@ -28,7 +28,7 @@ spec:
         name: in-cluster
         namespace: '{{.namespace}}'
       source:
-        repoURL: 'oci://registry.cloudlab.khuedoan.com/{{.namespace}}/{{.app}}'
+        repoURL: 'oci://registry.registry.svc.cluster.local/{{.namespace}}/{{.app}}'
         targetRevision: production
         path: '.'
       syncPolicy:
@@ -39,3 +39,14 @@ spec:
           - CreateNamespace=true
           - ApplyOutOfSyncOnly=true
           - ServerSideApply=true
+---
+# TODO remove this stupid shit
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oci-khuedoan-blog
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  url: oci://registry.registry.svc.cluster.local/khuedoan/blog
+  insecureOCIForceHttp: "true"
