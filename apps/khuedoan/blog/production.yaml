@@ -1,6 +1,6 @@
 defaultPodOptions:
   labels:
-    "istio.io/dataplane-mode": "ambient"
+    istio.io/dataplane-mode: ambient
 controllers:
   main:
     replicas: 2
@@ -9,7 +9,7 @@ controllers:
       main:
         image:
           repository: registry.registry.svc.cluster.local/khuedoan/blog
-          tag: 6fbd90b77a81e0bcb330fddaa230feff744a7010
+          tag: 57b9886db3f070bf33b15f586653fbae196470aa
 service:
   main:
     controller: main
@@ -24,14 +24,14 @@ ingress:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-      - host: www.khuedoan.com
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              identifier: main
-              port: 3000
+    - host: www.khuedoan.com
+      paths:
+      - path: /
+        pathType: Prefix
+        service:
+          identifier: main
+          port: 3000
     tls:
-      - hosts:
-          - www.khuedoan.com
-        secretName: blog-tls-certificate
+    - hosts:
+      - www.khuedoan.com
+      secretName: blog-tls-certificate
