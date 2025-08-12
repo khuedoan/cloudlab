@@ -9,7 +9,7 @@ controllers:
       main:
         image:
           repository: registry.registry.svc.cluster.local/khuedoan/blog
-          tag: 58acf5102686119320cb691ddeb614dcc9098a3b
+          tag: ee4c1a3cfa116889763fda1632afbff1f9858ae6
 service:
   main:
     controller: main
