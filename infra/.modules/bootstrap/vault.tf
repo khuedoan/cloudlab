@@ -89,8 +89,8 @@ resource "kubectl_manifest" "vault" {
                 kind       = "Vault"
                 spec = {
                   spec = {
-                    size  = 1
-                    image = "docker.io/hashicorp/vault:1.20.2"
+                    size           = 1
+                    image          = "docker.io/hashicorp/vault:1.20.2"
                     serviceAccount = "vault"
                     config = {
                       storage = {
@@ -100,7 +100,7 @@ resource "kubectl_manifest" "vault" {
                       }
                       listener = {
                         tcp = {
-                          address = "0.0.0.0:8200"
+                          address     = "0.0.0.0:8200"
                           tls_disable = true
                         }
                       }
@@ -135,10 +135,10 @@ resource "kubectl_manifest" "vault" {
                             {
                               # TODO optimize this
                               name = "default"
-                              bound_service_account_names: ["default"]
-                              bound_service_account_namespaces: ["default"]
-                              policies: ["allow_secrets"]
-                              ttl: "1h"
+                              bound_service_account_names = ["default"]
+                              bound_service_account_namespaces = ["default"]
+                              policies = ["allow_secrets"]
+                              ttl = "1h"
                             }
                           ]
                         }
@@ -146,11 +146,11 @@ resource "kubectl_manifest" "vault" {
                     }
                     volumes = [{
                       name = "vault-data"
-                      persistentVolumeClaim : {
-                        claimName : "vault-data"
+                      persistentVolumeClaim = {
+                        claimName = "vault-data"
                       }
                     }]
-                    volumeMounts : [{
+                    volumeMounts = [{
                       name      = "vault-data"
                       mountPath = "/vault/data"
                     }]
@@ -172,13 +172,13 @@ resource "kubectl_manifest" "vault" {
                                   }
                                 }
                               }
-                              path = "/"
+                              path     = "/"
                               pathType = "Prefix"
                             }]
                           }
                         }]
                         tls = [{
-                          hosts = ["vault.${var.cluster_domain}"]
+                          hosts      = ["vault.${var.cluster_domain}"]
                           secretName = "vault-tls-certificate"
                         }]
                       }
@@ -197,41 +197,41 @@ resource "kubectl_manifest" "vault" {
                   rules = [{
                     apiGroups = [""]
                     resources = ["secrets"]
-                    verbs = ["*"]
-                  }, {
+                    verbs     = ["*"]
+                    }, {
                     apiGroups = [""]
                     resources = ["pods"]
-                    verbs = ["get", "update", "patch"]
+                    verbs     = ["get", "update", "patch"]
                   }]
                 }
               }
               bindings = {
                 namespace = {
                   forceRename = "vault"
-                  type = "RoleBinding"
+                  type        = "RoleBinding"
                   roleRef = {
                     apiGroup = "rbac.authorization.k8s.io"
-                    kind = "Role"
-                    name = "vault"
+                    kind     = "Role"
+                    name     = "vault"
                   }
                   subjects = [{
-                    kind = "ServiceAccount"
+                    kind      = "ServiceAccount"
                     namespace = "{{ .Release.Namespace }}"
-                    name = "vault"
+                    name      = "vault"
                   }]
                 }
                 cluster = {
                   forceRename = "vault"
-                  type = "ClusterRoleBinding"
+                  type        = "ClusterRoleBinding"
                   roleRef = {
                     apiGroup = "rbac.authorization.k8s.io"
-                    kind = "ClusterRole"
-                    name = "system:auth-delegator"
+                    kind     = "ClusterRole"
+                    name     = "system:auth-delegator"
                   }
                   subjects = [{
-                    kind = "ServiceAccount"
+                    kind      = "ServiceAccount"
                     namespace = "{{ .Release.Namespace }}"
-                    name = "vault"
+                    name      = "vault"
                   }]
                 }
               }
