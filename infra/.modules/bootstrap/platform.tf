@@ -17,11 +17,9 @@ resource "kubectl_manifest" "platform" {
       }
       syncPolicy = local.sync_policy
       source = {
-        # TODO switch to internal registry
-        # repoURL        = "oci://registry.${var.cluster_domain}/platform"
-        repoURL        = "oci://docker.io/khuedoan/platform-manifests"
-        targetRevision = var.cluster
-        path           = "."
+        repoURL        = "http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab"
+        targetRevision = "master"
+        path           = "platform/${var.cluster}"
       }
     }
   })
