@@ -27,10 +27,16 @@ spec:
       destination:
         name: in-cluster
         namespace: '{{.namespace}}'
-      source:
-        repoURL: 'oci://registry.registry.svc.cluster.local/{{.namespace}}/{{.app}}'
-        targetRevision: production
-        path: '.'
+      sources:
+        - repoURL: 'oci://ghcr.io/bjw-s-labs/helm/app-template'
+          targetRevision: 4.2.0
+          path: .
+          helm:
+            valueFiles:
+              - $values/apps/{{.namespace}}/{{.app}}/production.yaml
+        - repoURL: 'http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab'
+          targetRevision: master
+          ref: values
       syncPolicy:
         automated:
           prune: true
@@ -39,14 +45,3 @@ spec:
           - CreateNamespace=true
           - ApplyOutOfSyncOnly=true
           - ServerSideApply=true
----
-# TODO remove this stupid shit
-apiVersion: v1
-kind: Secret
-metadata:
-  name: oci-khuedoan-blog
-  labels:
-    argocd.argoproj.io/secret-type: repository
-stringData:
-  url: oci://registry.registry.svc.cluster.local/khuedoan/blog
-  insecureOCIForceHttp: "true"
