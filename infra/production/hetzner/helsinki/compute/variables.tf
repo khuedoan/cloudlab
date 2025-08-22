@@ -3,3 +3,7 @@ variable "nodes" {
     location = string
   }))
 }
+
+variable "flake" {
+
+}
