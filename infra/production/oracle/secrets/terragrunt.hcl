@@ -4,7 +4,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../.modules//secrets"
+  source = find_in_parent_folders(".modules")//secrets"
 }
 
 dependency "cluster" {

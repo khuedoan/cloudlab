@@ -1,7 +1,10 @@
 terraform {
   # TODO move to modules
-  source = "."
+  source = "./hetzner-vm"
 }
+
+# TODO temp skip
+skip = true
 
 inputs = {
   nodes = {
