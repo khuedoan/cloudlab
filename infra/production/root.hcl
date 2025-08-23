@@ -44,6 +44,10 @@ generate "provider" {
         private_key  = local.secrets.oracle_private_key
         region       = local.secrets.oracle_region
       }
+      proxmox = {
+        endpoint = "https://proxmox:8006"
+        insecure = true
+      }
     }
   })
 }
