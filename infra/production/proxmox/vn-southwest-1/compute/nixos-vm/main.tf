@@ -62,7 +62,7 @@ module "main" {
   source                 = "github.com/nix-community/nixos-anywhere//terraform/all-in-one?ref=1.6.0"
   nixos_system_attr      = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.toplevel"
   nixos_partitioner_attr = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.diskoScript"
-  target_host            = proxmox_virtual_environment_vm.main.ipv4_addresses[1][0]
+  target_host            = proxmox_virtual_environment_vm.main.ipv6_addresses[1][0]
   instance_id            = proxmox_virtual_environment_vm.main.id
 
   depends_on = [time_sleep.wait_for_ip]
