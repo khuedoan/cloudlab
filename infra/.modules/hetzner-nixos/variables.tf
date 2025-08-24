@@ -4,6 +4,9 @@ variable "nodes" {
   }))
 }
 
-variable "flake" {
-
+variable "nixos" {
+  type = object({
+    flake = string
+    host = string
+  })
 }

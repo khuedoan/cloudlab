@@ -17,5 +17,8 @@ inputs = {
     #   location = "fsn1"
     # }
   }
-  flake = get_terragrunt_dir()
+  nixos = {
+    flake = "${find_in_parent_folders(".modules")}/nixos"
+    host = "k3s"
+  }
 }

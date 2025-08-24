@@ -24,8 +24,8 @@ module "nixos" {
   for_each = hcloud_server.nodes
 
   source                 = "github.com/nix-community/nixos-anywhere//terraform/all-in-one"
-  nixos_system_attr      = "${var.flake}#nixosConfigurations.master.config.system.build.toplevel"
-  nixos_partitioner_attr = "${var.flake}#nixosConfigurations.master.config.system.build.diskoScript"
+  nixos_system_attr      = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.toplevel"
+  nixos_partitioner_attr = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.diskoScript"
   target_host            = each.value.ipv6_address
   instance_id            = each.value.name
   build_on_remote        = true
