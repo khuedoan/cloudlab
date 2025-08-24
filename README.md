@@ -153,6 +153,15 @@ make
 - Fix OCI plain HTTP for local development
 - Config git username and email
 - Credentials for the worker (SSH priv + pub + knowhosts?)
+- Contract between clouds:
+  - Compute, x86_64 or aarch64
+  - Public IPv6
+  - Allow ports:
+    - 443
+    - 80 (for HTTP-01)
+    - 22
+    - 51820 and 51821 (for Wireguard IPv4 and IPv6)
+  - NixOS, with SSH access
 
 ## Acknowledgments and References
 
