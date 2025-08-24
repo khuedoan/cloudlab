@@ -4,13 +4,13 @@ include "root" {
 }
 
 terraform {
-  source = "${find_in_parent_folders(".modules")}//proxmox-nixos"
+  source = "${find_in_parent_folders("_modules")}//proxmox-nixos"
 }
 
 inputs = {
   name = "k3s"
   nixos = {
-    flake = "${find_in_parent_folders(".modules")}/nixos"
+    flake = "${find_in_parent_folders("_modules")}/nixos"
     host  = "k3s"
   }
   cpu = {

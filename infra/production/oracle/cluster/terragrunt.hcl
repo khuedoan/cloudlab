@@ -4,7 +4,7 @@ include "root" {
 }
 
 terraform {
-  source = "${find_in_parent_folders(".modules")}//cluster"
+  source = "${find_in_parent_folders("_modules")}//cluster"
 }
 
 dependency "legacy" {

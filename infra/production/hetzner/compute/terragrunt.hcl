@@ -1,5 +1,5 @@
 terraform {
-  source = "${find_in_parent_folders(".modules")}//hetzner-nixos"
+  source = "${find_in_parent_folders("_modules")}//hetzner-nixos"
 }
 
 # TODO temp skip
@@ -18,7 +18,7 @@ inputs = {
     # }
   }
   nixos = {
-    flake = "${find_in_parent_folders(".modules")}/nixos"
+    flake = "${find_in_parent_folders("_modules")}/nixos"
     host = "k3s"
   }
 }

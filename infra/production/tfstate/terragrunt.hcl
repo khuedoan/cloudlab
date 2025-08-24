@@ -4,7 +4,7 @@ include "root" {
 }
 
 terraform {
-  source = "${find_in_parent_folders(".modules")}//tfstate"
+  source = "${find_in_parent_folders("_modules")}//tfstate"
 
   before_hook "bootstrap_tfstate" {
     commands = ["init", "plan", "apply"]
