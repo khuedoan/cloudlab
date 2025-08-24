@@ -1,6 +1,5 @@
 terraform {
-  # TODO move to modules
-  source = "./hetzner-vm"
+  source = "${find_in_parent_folders(".modules")}//hetzner-nixos"
 }
 
 # TODO temp skip

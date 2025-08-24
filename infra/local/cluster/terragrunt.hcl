@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = find_in_parent_folders(".modules")//local-cluster"
+  source = "${find_in_parent_folders(".modules")}//local-cluster"
 }
 
 inputs = {
