@@ -4,7 +4,7 @@ include "root" {
 }
 
 terraform {
-  source = "${find_in_parent_folders("_modules")}//hetzner-nixos"
+  source = "${find_in_parent_folders("_modules")}//hetzner-vm"
 }
 
 inputs = {
@@ -18,9 +18,5 @@ inputs = {
     # "worker-2" = {
     #   location = "fsn1"
     # }
-  }
-  nixos = {
-    flake = "${find_in_parent_folders("_modules")}/nixos"
-    host  = "k3s-arm"
   }
 }

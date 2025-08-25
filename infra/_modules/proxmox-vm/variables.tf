@@ -7,13 +7,6 @@ variable "node_name" {
   default = "proxmox"
 }
 
-variable "nixos" {
-  type = object({
-    flake = string
-    host  = string
-  })
-}
-
 variable "cpu" {
   type = object({
     cores = number

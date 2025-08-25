@@ -6,5 +6,3 @@ terraform {
     }
   }
 }
-
-# TODO export HCLOUD_TOKEN
