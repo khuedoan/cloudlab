@@ -1,9 +1,11 @@
+include "root" {
+  path   = find_in_parent_folders("root.hcl")
+  expose = true
+}
+
 terraform {
   source = "${find_in_parent_folders("_modules")}//hetzner-nixos"
 }
-
-# TODO temp skip
-skip = true
 
 inputs = {
   nodes = {
@@ -19,6 +21,6 @@ inputs = {
   }
   nixos = {
     flake = "${find_in_parent_folders("_modules")}/nixos"
-    host = "k3s"
+    host  = "k3s-arm"
   }
 }

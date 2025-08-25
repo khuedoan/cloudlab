@@ -134,11 +134,11 @@ resource "kubectl_manifest" "vault" {
                           roles = [
                             {
                               # TODO optimize this
-                              name = "default"
-                              bound_service_account_names = ["default"]
+                              name                             = "default"
+                              bound_service_account_names      = ["default"]
                               bound_service_account_namespaces = ["default"]
-                              policies = ["allow_secrets"]
-                              ttl = "1h"
+                              policies                         = ["allow_secrets"]
+                              ttl                              = "1h"
                             }
                           ]
                         }

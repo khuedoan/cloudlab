@@ -23,12 +23,12 @@ resource "hcloud_server" "nodes" {
 module "nixos" {
   for_each = hcloud_server.nodes
 
-  source                 = "github.com/nix-community/nixos-anywhere//terraform/all-in-one"
+  source                 = "git::https://github.com/nix-community/nixos-anywhere//terraform/all-in-one?ref=main"
   nixos_system_attr      = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.toplevel"
   nixos_partitioner_attr = "${var.nixos.flake}#nixosConfigurations.${var.nixos.host}.config.system.build.diskoScript"
-  target_host            = each.value.ipv6_address
+  target_host            = each.value.ipv4_address # TODO switch to IPv6, see https://wiki.nixos.org/wiki/Install_NixOS_on_Hetzner_Cloud
   instance_id            = each.value.name
-  build_on_remote        = true
+
   # extra_files_script     = "${path.module}/decrypt-ssh-secrets.sh"
   # disk_encryption_key_scripts = [{
   #   path   = "/tmp/secret.key"

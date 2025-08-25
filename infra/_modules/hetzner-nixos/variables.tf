@@ -7,6 +7,6 @@ variable "nodes" {
 variable "nixos" {
   type = object({
     flake = string
-    host = string
+    host  = string
   })
 }
