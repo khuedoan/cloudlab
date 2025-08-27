@@ -16,12 +16,10 @@
         hosts = builtins.fromJSON (builtins.readFile ./hosts.json);
       in
       {
-      nixos = nixpkgs.lib.nixosSystem {
+      installer = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
-          disko.nixosModules.disko
-          ./configuration.nix
-          ./disks.nix
+          ./profiles/installer.nix
         ];
       };
       kube-1 = nixpkgs.lib.nixosSystem {
