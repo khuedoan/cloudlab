@@ -1,3 +1,7 @@
+# TODO temporarily disable Hetzner until I fix the IPv6 issue
+# https://wiki.nixos.org/wiki/Install_NixOS_on_Hetzner_Cloud
+skip = true
+
 include "root" {
   path   = find_in_parent_folders("root.hcl")
   expose = true
