@@ -7,3 +7,7 @@ variable "hosts" {
     ipv6_address = string
   }))
 }
+
+variable "sops_file" {
+  type = string
+}

@@ -17,7 +17,7 @@ variable "cdrom" {
   })
 
   default = {
-    file = "nixos-24.11.20250123.035f8c0-x86_64-linux.iso"
+    file = "nixos-minimal-25.05.808723.b1b329146965-x86_64-linux.iso"
   }
 }
 

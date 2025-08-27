@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, ... }:
 
 {
   networking = {
@@ -18,6 +18,7 @@
     k3s = {
       enable = true;
       role = "server";
+      tokenFile = config.sops.secrets.k3s_token.path;
       extraFlags = toString [
         "--disable-helm-controller"
         "--disable-network-policy"

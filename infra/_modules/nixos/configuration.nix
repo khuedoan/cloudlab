@@ -63,5 +63,15 @@
     };
   };
 
+  sops = {
+    age = {
+      keyFile = "/var/lib/secrets/age";
+    };
+    defaultSopsFile = ./secrets.yaml;
+    secrets = {
+      k3s_token = {};
+    };
+  };
+
   system.stateVersion = "25.05";
 }

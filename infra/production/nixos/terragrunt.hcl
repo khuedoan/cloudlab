@@ -12,6 +12,7 @@ dependency "proxmox" {
 }
 
 inputs = {
-  flake = "${find_in_parent_folders("_modules")}//nixos"
-  hosts = dependency.proxmox.outputs.hosts
+  flake     = "${find_in_parent_folders("_modules")}//nixos"
+  hosts     = dependency.proxmox.outputs.hosts
+  sops_file = find_in_parent_folders("secrets.yaml")
 }
