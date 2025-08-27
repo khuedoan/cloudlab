@@ -7,22 +7,17 @@
     };
   };
   outputs = { nixpkgs, disko, ... }: {
-    nixosConfigurations = {
+    nixosConfigurations =
+      let
+        hosts = builtins.fromJSON (builtins.readFile ./hosts.json);
+      in
+      {
       nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
           ./configuration.nix
           ./disks.nix
-        ];
-      };
-      devbox = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          disko.nixosModules.disko
-          ./configuration.nix
-          ./disks.nix
-          ./profiles/devbox.nix
         ];
       };
       kube-1 = nixpkgs.lib.nixosSystem {
@@ -32,6 +27,10 @@
           ./configuration.nix
           ./disks.nix
           ./profiles/k3s.nix
+          {
+            networking.hostName = "kube-1";
+            services.k3s.clusterInit = true;
+          }
         ];
       };
       kube-2 = nixpkgs.lib.nixosSystem {
@@ -41,6 +40,10 @@
           ./configuration.nix
           ./disks.nix
           ./profiles/k3s.nix
+          {
+            networking.hostName = "kube-2";
+            services.k3s.serverAddr = hosts.kube-1.ipv6_address;
+          }
         ];
       };
       kube-3 = nixpkgs.lib.nixosSystem {
@@ -50,15 +53,10 @@
           ./configuration.nix
           ./disks.nix
           ./profiles/k3s.nix
-        ];
-      };
-      k3s-arm = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          disko.nixosModules.disko
-          ./configuration.nix
-          ./disks.nix
-          ./profiles/k3s.nix
+          {
+            networking.hostName = "kube-3";
+            services.k3s.serverAddr = hosts.kube-1.ipv6_address;
+          }
         ];
       };
     };

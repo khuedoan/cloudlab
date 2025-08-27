@@ -1,8 +1,5 @@
 { modulesPath, ... }:
 
-let
-  hosts = builtins.fromJSON (builtins.readFile ./hosts.json);
-in
 {
   imports = [
     (modulesPath + "/profiles/all-hardware.nix")
