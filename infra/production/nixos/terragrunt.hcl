@@ -13,9 +13,5 @@ dependency "proxmox" {
 
 inputs = {
   flake = "${find_in_parent_folders("_modules")}//nixos"
-  hosts = {
-    k3s = {
-      ipv6_address = dependency.proxmox.outputs.ipv6_address
-    }
-  }
+  hosts = dependency.proxmox.outputs.hosts
 }

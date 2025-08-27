@@ -1,3 +1,14 @@
+resource "local_file" "hosts" {
+  content         = jsonencode(var.hosts) # Converts variables to JSON
+  filename        = "${var.flake}/hosts.json"
+  file_permission = "600"
+
+  provisioner "local-exec" {
+    interpreter = ["bash", "-c"]
+    command     = "git add -f '${var.flake}/hosts.json'"
+  }
+}
+
 module "nixos" {
   for_each = var.hosts
 

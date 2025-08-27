@@ -1,22 +1,14 @@
-variable "name" {
-  type = string
+variable "hosts" {
+  type = map(object({
+    cpu    = number
+    memory = number
+    disk   = number
+  }))
 }
 
 variable "node_name" {
   type    = string
   default = "proxmox"
-}
-
-variable "cpu" {
-  type = object({
-    cores = number
-  })
-}
-
-variable "memory" {
-  type = object({
-    dedicated = number
-  })
 }
 
 variable "cdrom" {
@@ -27,12 +19,6 @@ variable "cdrom" {
   default = {
     file = "nixos-24.11.20250123.035f8c0-x86_64-linux.iso"
   }
-}
-
-variable "disks" {
-  type = map(object({
-    size = number
-  }))
 }
 
 variable "tags" {

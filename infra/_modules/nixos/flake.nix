@@ -25,7 +25,25 @@
           ./profiles/devbox.nix
         ];
       };
-      k3s = nixpkgs.lib.nixosSystem {
+      kube-1 = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          ./configuration.nix
+          ./disks.nix
+          ./profiles/k3s.nix
+        ];
+      };
+      kube-2 = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          ./configuration.nix
+          ./disks.nix
+          ./profiles/k3s.nix
+        ];
+      };
+      kube-3 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko

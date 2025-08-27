@@ -1,15 +1,17 @@
 resource "proxmox_virtual_environment_vm" "main" {
-  name      = var.name
+  for_each = var.hosts
+
+  name      = each.key
   node_name = var.node_name
 
   cpu {
-    cores = var.cpu.cores
+    cores = each.value.cpu
   }
 
   memory {
-    dedicated = 1024 * var.memory.dedicated
+    dedicated = 1024 * each.value.memory
     # Set floating to the same value as dedicated to enable ballooning device
-    floating = 1024 * var.memory.dedicated
+    floating = 1024 * each.value.memory
   }
 
   cdrom {
@@ -18,14 +20,11 @@ resource "proxmox_virtual_environment_vm" "main" {
     interface = "ide3"
   }
 
-  dynamic "disk" {
-    for_each = var.disks
-    content {
-      datastore_id = "local-lvm"
-      interface    = "scsi0"
-      size         = disk.value.size
-      file_format  = "raw"
-    }
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = each.value.disk
+    file_format  = "raw"
   }
 
   boot_order = [
