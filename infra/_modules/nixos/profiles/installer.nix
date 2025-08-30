@@ -5,6 +5,10 @@
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
   ];
 
+  networking = {
+    tempAddresses = "disabled";
+  };
+
   services = {
     openssh = {
       enable = true;

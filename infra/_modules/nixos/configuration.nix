@@ -17,7 +17,11 @@
   };
 
   networking = {
-    networkmanager = {
+    tempAddresses = "disabled";
+  };
+
+  systemd = {
+    network = {
       enable = true;
     };
   };

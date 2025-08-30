@@ -21,4 +21,8 @@ module "nixos" {
   extra_environment = {
     SOPS_FILE = var.sops_file
   }
+
+  depends_on = [
+    local_file.hosts
+  ]
 }
