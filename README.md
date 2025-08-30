@@ -168,3 +168,4 @@ make
 - [Oracle Terraform Modules](https://github.com/oracle-terraform-modules)
 - [Official k3s systemd service file](https://github.com/k3s-io/k3s/blob/master/k3s.service)
 - [Sample Prometheus configuration for Istio](https://github.com/istio/istio/blob/master/samples/addons/extras/prometheus-operator.yaml)
+- [Terraform and nixos-anywhere infrastructure for wiki.nixos.org](https://github.com/NixOS/nixos-wiki-infra)
