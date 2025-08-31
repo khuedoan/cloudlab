@@ -29,7 +29,7 @@
           sops-nix.nixosModules.sops
           ./configuration.nix
           ./disks.nix
-          ./profiles/k3s.nix
+          ./profiles/k3s-server.nix
           {
             networking.hostName = "kube-1";
             systemd.network.networks."30-wan" = {
@@ -58,7 +58,7 @@
           sops-nix.nixosModules.sops
           ./configuration.nix
           ./disks.nix
-          ./profiles/k3s.nix
+          ./profiles/k3s-server.nix
           {
             networking.hostName = "kube-2";
             systemd.network.networks."30-wan" = {
@@ -87,7 +87,7 @@
           sops-nix.nixosModules.sops
           ./configuration.nix
           ./disks.nix
-          ./profiles/k3s.nix
+          ./profiles/k3s-server.nix
           {
             networking.hostName = "kube-3";
             systemd.network.networks."30-wan" = {
