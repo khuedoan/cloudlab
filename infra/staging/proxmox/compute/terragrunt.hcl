@@ -13,4 +13,8 @@ inputs = {
     "kube-2" = { cpu = 4, memory = 12, disk = 128 }
     "kube-3" = { cpu = 4, memory = 12, disk = 128 }
   }
+
+  tags = [
+    "staging"
+  ]
 }
