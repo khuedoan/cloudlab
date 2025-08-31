@@ -39,22 +39,6 @@ generate "provider" {
 
   contents = jsonencode(lookup(
     {
-      oracle = {
-        provider = {
-          oci = {
-            tenancy_ocid = local.secrets.oracle_tenancy_ocid
-            user_ocid    = local.secrets.oracle_user_ocid
-            fingerprint  = local.secrets.oracle_fingerprint
-            private_key  = local.secrets.oracle_private_key
-            region       = local.secrets.oracle_region
-          }
-        }
-      }
-      hetzner = {
-        provider = {
-          hcloud = {}
-        }
-      }
       proxmox = {
         provider = {
           proxmox = {
