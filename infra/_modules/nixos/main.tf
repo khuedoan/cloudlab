@@ -26,3 +26,12 @@ module "nixos" {
     local_file.hosts
   ]
 }
+
+data "external" "kubeconfig" {
+  program = ["${path.module}/kubeconfig_datasource.py"]
+
+  query = {
+    user = "root"
+    host = var.hosts["kube-1"].ipv6_address # TODO better way to get this
+  }
+}
