@@ -34,4 +34,8 @@ data "external" "kubeconfig" {
     user = "root"
     host = var.hosts["kube-1"].ipv6_address # TODO better way to get this
   }
+
+  depends_on = [
+    module.nixos
+  ]
 }
