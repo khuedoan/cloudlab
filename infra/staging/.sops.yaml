@@ -1,0 +1,7 @@
+creation_rules:
+  # TODO auto manage age keys, currently have to:
+  # - run age-keygen
+  # - copy public key here
+  # - copy private key to ~/.config/sops/age/keys.txt
+  - age: >-
+      age15c5rpksj0u27sp667525zqh8dhtd70rwrlv7xq2hqhsfaempcdwqu3unel
