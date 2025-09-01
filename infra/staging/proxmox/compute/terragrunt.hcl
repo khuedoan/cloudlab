@@ -10,8 +10,6 @@ terraform {
 inputs = {
   hosts = {
     "kube-1" = { cpu = 4, memory = 12, disk = 128 }
-    "kube-2" = { cpu = 4, memory = 12, disk = 128 }
-    "kube-3" = { cpu = 4, memory = 12, disk = 128 }
   }
 
   tags = [
