@@ -6,11 +6,14 @@
     k3s = {
       manifests = {
         flux = {
-          source = pkgs.fetchurl {
-            # nix-prefetch-url
-            url = "https://github.com/fluxcd/flux2/releases/download/v2.6.4/install.yaml";
-            sha256 = "1f1smpa5jwmb6x13w2zb8wdp8a4b2i386h6yp6s2frv64fl47l3w";
-          };
+          source = pkgs.runCommand "flux-install-manifest" {
+            nativeBuildInputs = [ pkgs.fluxcd ];
+          } ''
+            mkdir -p $out
+            flux install \
+              --components=source-controller,kustomize-controller,helm-controller \
+              --export > $out/flux.yaml
+          '';
         };
       };
     };
