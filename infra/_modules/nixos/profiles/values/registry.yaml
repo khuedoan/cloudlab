@@ -1,0 +1,12 @@
+nameOverride: registry # Otherwise it will render registry-zot as the service name
+image:
+  repository: ghcr.io/project-zot/zot
+podLabels:
+  istio.io/dataplane-mode: ambient
+service:
+  type: ClusterIP
+  clusterIP: fd6a:7c7b:3e12:100::f # TODO don't hard code?
+persistence: true
+pvc:
+  create: true
+  storage: 10Gi
