@@ -30,7 +30,7 @@ locals {
             "%x",
             (
               (
-                ( (floor(parseint(split(":", lower(node.network_device[0].mac_address))[0], 16) / 2)) % 2 ) == 0
+                ((floor(parseint(split(":", lower(node.network_device[0].mac_address))[0], 16) / 2)) % 2) == 0
               )
               ? parseint(split(":", lower(node.network_device[0].mac_address))[0], 16) + 2
               : parseint(split(":", lower(node.network_device[0].mac_address))[0], 16) - 2
@@ -66,13 +66,13 @@ output "hosts" {
           ip if endswith(lower(ip), local.eui64_suffix_by_node[node.id])
         ]) > 0
         ? [
-            for ip in flatten(node.ipv6_addresses) :
-            ip if endswith(lower(ip), local.eui64_suffix_by_node[node.id])
-          ][0]
+          for ip in flatten(node.ipv6_addresses) :
+          ip if endswith(lower(ip), local.eui64_suffix_by_node[node.id])
+        ][0]
         : [
-            for ip in flatten(node.ipv6_addresses) :
-            ip if ip != "::1" && !startswith(lower(ip), "fe80:")
-          ][0]
+          for ip in flatten(node.ipv6_addresses) :
+          ip if ip != "::1" && !startswith(lower(ip), "fe80:")
+        ][0]
       )
     }
   }

@@ -9,11 +9,9 @@ terraform {
 
 inputs = {
   nodes = {
-    "kube-4" = {
+    # Masters are pets, workers are cattle, hence worker names are random
+    "production-YnJ1aGgK" = {
       location = "hel1"
     }
-    # "kube-5" = {
-    #   location = "nbg1"
-    # }
   }
 }

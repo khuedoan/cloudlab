@@ -13,6 +13,6 @@ inputs = {
   }
 
   tags = [
-    "staging"
+    "kube-staging"
   ]
 }

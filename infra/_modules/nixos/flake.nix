@@ -19,10 +19,14 @@
       installer = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          disko.nixosModules.disko
+          sops-nix.nixosModules.sops
           ./profiles/installer.nix
         ];
       };
-      kube-1 = nixpkgs.lib.nixosSystem {
+
+      # Production
+      production-master-1 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
@@ -32,85 +36,87 @@
           ./profiles/k3s-server.nix
           ./profiles/k3s-addons.nix
           {
-            networking.hostName = "kube-1";
+            networking.hostName = "production-master-1";
             systemd.network.networks."30-wan" = {
               matchConfig.Name = "ens18";
               networkConfig.DHCP = "ipv4";
               address = [
-                hosts.kube-1.ipv6_address
+                hosts.production-master-1.ipv6_address
               ];
               routes = [
                 { Gateway = "fe80::1"; }
               ];
             };
             services.k3s = {
-              clusterInit = true;
+              # TODO may need HA later
+              # clusterInit = true;
+              disableAgent = true;
               extraFlags = nixpkgs.lib.mkAfter [
-                "--node-external-ip=${hosts.kube-1.ipv6_address}"
+                "--node-external-ip=${hosts.production-master-1.ipv6_address}"
               ];
             };
           }
         ];
       };
-      kube-2 = nixpkgs.lib.nixosSystem {
+      production-aGVsbG8K = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
           sops-nix.nixosModules.sops
           ./configuration.nix
           ./disks.nix
-          ./profiles/k3s-server.nix
+          ./profiles/k3s-agent.nix
           {
-            networking.hostName = "kube-2";
+            networking.hostName = "production-aGVsbG8K";
             systemd.network.networks."30-wan" = {
-              matchConfig.Name = "ens18";
+              matchConfig.Name = "enp1s0";
               networkConfig.DHCP = "ipv4";
               address = [
-                hosts.kube-2.ipv6_address
+                hosts.production-aGVsbG8K.ipv6_address
               ];
               routes = [
                 { Gateway = "fe80::1"; }
               ];
             };
             services.k3s = {
-              serverAddr = "https://[${hosts.kube-1.ipv6_address}]:6443";
+              serverAddr = "https://[${hosts.production-master-1.ipv6_address}]:6443";
               extraFlags = nixpkgs.lib.mkAfter [
-                "--node-external-ip=${hosts.kube-2.ipv6_address}"
+                "--node-external-ip=${hosts.production-aGVsbG8K.ipv6_address}"
               ];
             };
           }
         ];
       };
-      kube-3 = nixpkgs.lib.nixosSystem {
+      production-d29ybGQK = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
           sops-nix.nixosModules.sops
           ./configuration.nix
           ./disks.nix
-          ./profiles/k3s-server.nix
+          ./profiles/k3s-agent.nix
           {
-            networking.hostName = "kube-3";
+            networking.hostName = "production-d29ybGQK";
             systemd.network.networks."30-wan" = {
-              matchConfig.Name = "ens18";
+              matchConfig.Name = "enp1s0";
               networkConfig.DHCP = "ipv4";
               address = [
-                hosts.kube-3.ipv6_address
+                hosts.production-d29ybGQK.ipv6_address
               ];
               routes = [
                 { Gateway = "fe80::1"; }
               ];
             };
             services.k3s = {
-              serverAddr = "https://[${hosts.kube-1.ipv6_address}]:6443";
+              serverAddr = "https://[${hosts.production-master-1.ipv6_address}]:6443";
               extraFlags = nixpkgs.lib.mkAfter [
-                "--node-external-ip=${hosts.kube-3.ipv6_address}"
+                "--node-external-ip=${hosts.production-d29ybGQK.ipv6_address}"
               ];
             };
           }
         ];
       };
-      kube-4 = nixpkgs.lib.nixosSystem {
+      production-YnJ1aGgK = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
           disko.nixosModules.disko
@@ -119,21 +125,21 @@
           ./disks.nix
           ./profiles/k3s-agent.nix
           {
-            networking.hostName = "kube-4";
+            networking.hostName = "production-YnJ1aGgK";
             systemd.network.networks."30-wan" = {
               matchConfig.Name = "enp1s0";
               networkConfig.DHCP = "ipv4";
               address = [
-                hosts.kube-4.ipv6_address
+                hosts.production-YnJ1aGgK.ipv6_address
               ];
               routes = [
                 { Gateway = "fe80::1"; }
               ];
             };
             services.k3s = {
-              serverAddr = "https://[${hosts.kube-1.ipv6_address}]:6443";
+              serverAddr = "https://[${hosts.production-master-1.ipv6_address}]:6443";
               extraFlags = nixpkgs.lib.mkAfter [
-                "--node-external-ip=${hosts.kube-4.ipv6_address}"
+                "--node-external-ip=${hosts.production-YnJ1aGgK.ipv6_address}"
               ];
             };
           }

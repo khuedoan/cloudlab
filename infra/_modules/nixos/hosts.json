@@ -1,1 +1,1 @@
-{"kube-1":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe24:6daf"},"kube-2":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe34:24df"},"kube-3":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe50:9cba"},"kube-4":{"ipv6_address":"2a01:4f9:c012:3cad::1"}}
+{"production-YnJ1aGgK":{"ipv6_address":"2a01:4f9:c012:3cad::1"},"production-aGVsbG8K":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe0e:80d3"},"production-d29ybGQK":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe30:1671"},"production-master-1":{"ipv6_address":"2402:800:63e2:5af5:be24:11ff:fe3e:c73c"}}

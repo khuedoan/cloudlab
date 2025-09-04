@@ -8,6 +8,10 @@ variable "hosts" {
   }))
 }
 
+variable "kube_api_host" {
+  type = string
+}
+
 variable "sops_file" {
   type = string
 }

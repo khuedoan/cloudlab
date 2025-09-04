@@ -16,10 +16,11 @@ dependency "hetzner" {
 }
 
 inputs = {
-  flake     = "${find_in_parent_folders("_modules")}//nixos"
-  hosts     = merge(
+  flake = "${find_in_parent_folders("_modules")}//nixos"
+  hosts = merge(
     dependency.proxmox.outputs.hosts,
     dependency.hetzner.outputs.hosts,
   )
-  sops_file = find_in_parent_folders("secrets.yaml")
+  kube_api_host = dependency.proxmox.outputs.hosts["production-master-1"].ipv6_address
+  sops_file     = find_in_parent_folders("secrets.yaml")
 }
