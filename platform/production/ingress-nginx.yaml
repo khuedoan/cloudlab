@@ -1,0 +1,32 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2 # TODO v1
+kind: OCIRepository
+metadata:
+  name: ingress-nginx
+  namespace: flux-system
+spec:
+  interval: 4h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/helm/ingress-nginx
+  insecure: true
+  ref:
+    tag: 4.13.2
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ingress-nginx
+  namespace: flux-system
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: ingress-nginx
+  releaseName: ingress-nginx
+  targetNamespace: ingress-nginx
+  install:
+    createNamespace: true
+  values:
+    controller:
+      podLabels:
+        istio.io/dataplane-mode: ambient
+      admissionWebhooks:
+        timeoutSeconds: 30
