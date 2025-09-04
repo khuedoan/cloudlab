@@ -28,5 +28,8 @@ spec:
     controller:
       podLabels:
         istio.io/dataplane-mode: ambient
+      service:
+        ipFamilies:
+          - IPv6
       admissionWebhooks:
         timeoutSeconds: 30
