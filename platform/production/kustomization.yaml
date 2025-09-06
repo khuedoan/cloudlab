@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ingress-nginx.yaml
   - istio.yaml
+  - cert-manager.yaml
