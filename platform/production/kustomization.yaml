@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - ingress-nginx.yaml
+  - istio.yaml
