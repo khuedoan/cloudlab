@@ -23,6 +23,7 @@
               age
               ansible
               ansible-lint
+              dotnetCorePackages.sdk_8_0-bin
               fzf
               gnumake
               go
@@ -34,6 +35,7 @@
               opentofu
               oras
               pre-commit
+              pulumi-bin
               shellcheck
               sops
               temporal-cli

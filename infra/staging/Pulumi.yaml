@@ -1,0 +1,7 @@
+name: cloudlab
+description: Cloudlab
+runtime: dotnet
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: fsharp
