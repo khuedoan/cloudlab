@@ -34,6 +34,8 @@
               opentofu
               oras
               pre-commit
+              pulumi
+              pulumiPackages.pulumi-go
               shellcheck
               sops
               temporal-cli
