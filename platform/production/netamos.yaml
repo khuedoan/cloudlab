@@ -34,8 +34,8 @@ spec:
               app:
                 image:
                   # TODO switch to netamos
-                  repository: docker.io/khuedoan/platform-engine
-                  tag: 2bddb5d74081335c41b8ab85c8d8db67ad9c6bc4
+                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+                  tag: 3a908a8a0acbf914342dd52f3e768e8e99b44a3e
                   pullPolicy: Always
                 command:
                   - /usr/local/bin/server
@@ -54,8 +54,8 @@ spec:
               app:
                 image:
                   # TODO switch to netamos
-                  repository: docker.io/khuedoan/platform-engine
-                  tag: 2bddb5d74081335c41b8ab85c8d8db67ad9c6bc4
+                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+                  tag: 3a908a8a0acbf914342dd52f3e768e8e99b44a3e
                   pullPolicy: Always
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
