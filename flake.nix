@@ -30,6 +30,7 @@
               kubectl
               kubernetes-helm
               nixfmt-rfc-style
+              nixos-anywhere
               openssh
               opentofu
               oras
