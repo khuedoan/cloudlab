@@ -19,12 +19,9 @@ spec:
       - ServerSideApply=true
   source:
     repoURL: oci://ghcr.io/h44z/charts/wg-portal
-    targetRevision: 0.7.1
+    targetRevision: 0.7.2
     helm:
       valuesObject:
-        # TODO remove tag override when new version is released with hide_login_form
-        image:
-          tag: "master@sha256:75b0a5476fddce6a9a4a2d75fd4e5af914e8c51b754c7ac55f72c9ca5451850d"
         config:
           core:
             create_default_peer: true
