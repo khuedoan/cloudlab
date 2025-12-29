@@ -5,6 +5,7 @@ provider "registry.opentofu.org/bpg/proxmox" {
   version     = "0.57.1"
   constraints = "~> 0.57.0"
   hashes = [
+    "h1:Eymic2/G7vKM5DSiRvN8VFQ979oBpq1IxweEzWu3kvc=",
     "h1:F6o5o32V+mE96gHUppHI0U+olrEtxtr23fwUigtQ/Wk=",
     "zh:220c75d76e8779970d4e01effdb3073a24139f5065397dae1347710e80b69865",
     "zh:271d71cb39225a4efd4b6e0cbb2cba50f89006a353db932969deed5db07cdd9b",
@@ -27,6 +28,7 @@ provider "registry.opentofu.org/bpg/proxmox" {
 provider "registry.opentofu.org/hashicorp/time" {
   version = "0.13.1"
   hashes = [
+    "h1:3X1jTAlLJV6G9AylC+BgX7WrKFcZYHqA+Z4JwB+v7as=",
     "h1:ueilLAoXlZPufdJYuPFeqznwP39ZwLsRcQtqow+NUiI=",
     "zh:10f32af8b544a039f19abd546e345d056a55cb7bdd69d5bbd7322cbc86883848",
     "zh:35dd5beb34a9f73de8d0fed332814c69acae69397c9c065ce63ccd8315442bef",
