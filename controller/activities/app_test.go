@@ -109,7 +109,7 @@ controllers:
     containers:
       main:
         image:
-          repository: zot.zot.svc.cluster.local/example-service
+          repository: registry.registry.svc.cluster.local/example-service
           tag: 828c31f942e8913ab2af53a2841c180586c5b7e1
 service:
   main:
@@ -119,7 +119,7 @@ service:
         port: 8080
         protocol: HTTP`,
 			newImages: []Image{
-				{Repository: "zot.zot.svc.cluster.local/example-service", Tag: "abc123def456789012345678901234567890abcd"},
+				{Repository: "registry.registry.svc.cluster.local/example-service", Tag: "abc123def456789012345678901234567890abcd"},
 			},
 			expectedUpdate: true,
 		},
@@ -336,7 +336,7 @@ controllers:
     containers:
       main:
         image:
-          repository: zot.zot.svc.cluster.local/example-service
+          repository: registry.registry.svc.cluster.local/example-service
           tag: 828c31f942e8913ab2af53a2841c180586c5b7e1
 service:
   main:
@@ -346,10 +346,10 @@ service:
         port: 8080
         protocol: HTTP`,
 			newImages: []Image{
-				{Repository: "zot.zot.svc.cluster.local/example-service", Tag: "newgithash12345678901234567890"},
+				{Repository: "registry.registry.svc.cluster.local/example-service", Tag: "newgithash12345678901234567890"},
 			},
 			expectedTags: map[string]string{
-				"zot.zot.svc.cluster.local/example-service": "newgithash12345678901234567890",
+				"registry.registry.svc.cluster.local/example-service": "newgithash12345678901234567890",
 			},
 		},
 	}

@@ -8,7 +8,7 @@ controllers:
     containers:
       main:
         image:
-          repository: zot.zot.svc.cluster.local/example-service
+          repository: registry.registry.svc.cluster.local/example-service
           tag: v6.9.0
 service:
   main:

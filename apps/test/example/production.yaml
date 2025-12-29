@@ -8,7 +8,7 @@ controllers:
     containers:
       main:
         image:
-          repository: zot.zot.svc.cluster.local/example-service
+          repository: registry.registry.svc.cluster.local/example-service
           tag: 828c31f942e8913ab2af53a2841c180586c5b7e1
         env:
           # TODO this secret was created manually in vault

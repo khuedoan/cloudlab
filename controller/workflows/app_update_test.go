@@ -236,16 +236,16 @@ func (s *AppUpdateWorkflowTestSuite) TestAppUpdate_MultipleImages() {
 		Namespace: "test",
 		App:       "example",
 		Cluster:   "local",
-		Registry:  "zot.zot.svc.cluster.local",
+		Registry:  "registry.registry.svc.cluster.local",
 		NewImages: []activities.Image{
-			{Repository: "zot.zot.svc.cluster.local/example-service", Tag: "newcommithash123"},
+			{Repository: "registry.registry.svc.cluster.local/example-service", Tag: "newcommithash123"},
 			{Repository: "docker.io/redis", Tag: "7.0-alpine"},
 		},
 	}
 	workspace := "/tmp/cloudlab-repos/jkl012"
 	appFilePath := workspace + "/apps/test/example/local.yaml"
 	mockPushResult := &activities.PushResult{
-		Reference: "zot.zot.svc.cluster.local/test/example:local",
+		Reference: "registry.registry.svc.cluster.local/test/example:local",
 		Digest:    "sha256:def789abc123",
 	}
 

@@ -35,13 +35,13 @@ spec:
               app:
                 image:
                   # TODO bootstrap and build itself
-                  # repository: zot.zot.svc.cluster.local/khuedoan/app-engine
+                  # repository: registry.registry.svc.cluster.local/khuedoan/app-engine
                   repository: docker.io/khuedoan/app-engine
                   tag: 4118f906ab07a17f3dac608f1a690b2215e4d2a5
                   pullPolicy: Always
                 env:
                   TEMPORAL_URL: http://temporal-frontend.temporal:7233
-                  REGISTRY: zot.zot.svc.cluster.local
+                  REGISTRY: registry.registry.svc.cluster.local
               docker:
                 image:
                   repository: docker.io/library/docker
@@ -49,7 +49,7 @@ spec:
                 command:
                   - dockerd
                   - --host=unix:///var/run/docker.sock
-                  - --insecure-registry=zot.zot.svc.cluster.local
+                  - --insecure-registry=registry.registry.svc.cluster.local
                 securityContext:
                   privileged: true
         persistence:
