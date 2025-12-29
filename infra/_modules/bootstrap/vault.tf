@@ -135,8 +135,8 @@ resource "kubectl_manifest" "vault" {
                             {
                               # TODO optimize this
                               name                             = "default"
-                              bound_service_account_names      = ["default"]
-                              bound_service_account_namespaces = ["default"]
+                              bound_service_account_names      = ["*"]
+                              bound_service_account_namespaces = ["*"]
                               policies                         = ["allow_secrets"]
                               ttl                              = "1h"
                             }

@@ -10,6 +10,10 @@ controllers:
         image:
           repository: zot.zot.svc.cluster.local/example-service
           tag: 828c31f942e8913ab2af53a2841c180586c5b7e1
+        env:
+          # TODO this secret was created manually in vault
+          # vault kv put secret/test/example MANUALLY_CREATED_EXAMPLE_SECRET=s3cr3t
+          EXAMPLE_SECRET: vault:secret/data/test/example#MANUALLY_CREATED_EXAMPLE_SECRET
 service:
   main:
     controller: main
