@@ -13,7 +13,7 @@ metadata:
   name: istio-base
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 3m
   chart:
     spec:
       chart: base
@@ -32,7 +32,7 @@ metadata:
   name: istio-cni
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 3m
   chart:
     spec:
       chart: cni
@@ -53,7 +53,7 @@ metadata:
   name: ztunnel
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 3m
   chart:
     spec:
       chart: ztunnel
@@ -72,7 +72,7 @@ metadata:
   name: istiod
   namespace: flux-system
 spec:
-  interval: 30m
+  interval: 3m
   chart:
     spec:
       chart: istiod
