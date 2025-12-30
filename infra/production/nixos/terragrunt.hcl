@@ -16,8 +16,8 @@ dependency "hetzner" {
 }
 
 inputs = {
-  flake     = "${find_in_parent_folders("_modules")}//nixos"
-  hosts     = merge(
+  flake = "${find_in_parent_folders("_modules")}//nixos"
+  hosts = merge(
     dependency.proxmox.outputs.hosts,
     dependency.hetzner.outputs.hosts,
   )
