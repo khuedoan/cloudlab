@@ -17,6 +17,7 @@ module "nixos" {
   nixos_partitioner_attr = "${var.flake}#nixosConfigurations.${each.key}.config.system.build.diskoScript"
   target_host            = each.value.ipv6_address
   instance_id            = each.key
+  build_on_remote        = true
   extra_files_script     = "${path.module}/decrypt-age-keys.sh"
   extra_environment = {
     SOPS_FILE = var.sops_file
