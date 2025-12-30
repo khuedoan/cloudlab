@@ -25,7 +25,6 @@ apps:
 	@temporal workflow result --workflow-id apps-manual
 
 test:
-	cd controller && go test ./...
 	cd test && go test
 
 fmt:
@@ -36,9 +35,7 @@ fmt:
 		.
 	terragrunt hcl format
 	cd infra/_modules && tofu fmt -recursive
-	cd controller && go fmt ./...
 	cd infra/_modules/tfstate && go fmt ./...
-	cd infra/staging && go fmt ./...
 	cd test && go fmt ./...
 
 tidy: fmt
