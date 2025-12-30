@@ -162,6 +162,9 @@ make
     - 22
     - 51820 and 51821 (for Wireguard IPv4 and IPv6)
   - NixOS, with SSH access
+- Firewall rules (currently manually managed in routers):
+  - TCP: 6443 (Kube API), 443 (HTTPS), 80 (HTTP), 10250 (Kubelet metrics), 22 (SSH)
+  - UDP: 51820 (Wireguard IPv4), 51821 (Wireguard IPv6)
 
 ## Acknowledgments and References
 
