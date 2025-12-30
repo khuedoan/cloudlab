@@ -60,6 +60,7 @@
           ./configuration.nix
           ./disks.nix
           ./profiles/k3s-server.nix
+          ./profiles/k3s-addons.nix
           {
             networking.hostName = "kube-2";
             systemd.network.networks."30-wan" = {
@@ -89,6 +90,7 @@
           ./configuration.nix
           ./disks.nix
           ./profiles/k3s-server.nix
+          ./profiles/k3s-addons.nix
           {
             networking.hostName = "kube-3";
             systemd.network.networks."30-wan" = {
