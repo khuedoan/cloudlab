@@ -1,0 +1,86 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: istio
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://istio-release.storage.googleapis.com/charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: istio-base
+  namespace: flux-system
+spec:
+  interval: 3m
+  chart:
+    spec:
+      chart: base
+      version: 1.25.1
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+  releaseName: istio-base
+  targetNamespace: istio-system
+  install:
+    createNamespace: true
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: istio-cni
+  namespace: flux-system
+spec:
+  interval: 3m
+  chart:
+    spec:
+      chart: cni
+      version: 1.25.1
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+  releaseName: istio-cni
+  targetNamespace: istio-system
+  values:
+    global:
+      platform: k3s
+    profile: ambient
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ztunnel
+  namespace: flux-system
+spec:
+  interval: 3m
+  chart:
+    spec:
+      chart: ztunnel
+      version: 1.25.1
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+  releaseName: ztunnel
+  targetNamespace: istio-system
+  values:
+    profile: ambient
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: istiod
+  namespace: flux-system
+spec:
+  interval: 3m
+  chart:
+    spec:
+      chart: istiod
+      version: 1.25.1
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+  releaseName: istiod
+  targetNamespace: istio-system
+  values:
+    profile: ambient

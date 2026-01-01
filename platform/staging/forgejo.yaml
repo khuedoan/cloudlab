@@ -1,0 +1,98 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: forgejo
+  namespace: flux-system
+spec:
+  type: oci
+  url: oci://code.forgejo.org/forgejo-helm
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: forgejo
+      version: 15.0.3
+      sourceRef:
+        kind: HelmRepository
+        name: forgejo
+  releaseName: forgejo
+  targetNamespace: forgejo
+  install:
+    createNamespace: true
+  values:
+    strategy:
+      type: Recreate
+    gitea:
+      config:
+        database:
+          DB_TYPE: sqlite3
+        session:
+          PROVIDER: memory
+        cache:
+          ADAPTER: memory
+        queue:
+          TYPE: level
+        server:
+          LANDING_PAGE: explore
+          ROOT_URL: https://code.khuedoan.com
+          OFFLINE_MODE: true
+        repository:
+          DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages
+          DISABLE_STARS: true
+          DEFAULT_BRANCH: master
+        oauth2_client:
+          ENABLE_AUTO_REGISTRATION: true
+          OPENID_CONNECT_SCOPES: "email profile"
+          USERNAME: username
+        service:
+          ENABLE_INTERNAL_SIGNIN: false
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: true
+        "service.explore":
+          DISABLE_USERS_PAGE: true
+        actions:
+          ENABLED: false
+        webhook:
+          ALLOWED_HOST_LIST: "private"
+        other:
+          SHOW_FOOTER_VERSION: false
+          SHOW_FOOTER_TEMPLATE_LOAD_TIME: false
+          SHOW_FOOTER_POWERED_BY: false
+      oauth:
+        - name: SSO
+          provider: 'openidConnect'
+          autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
+          existingSecret: forgejo-oauth
+      admin:
+        email: admin@cloudlab.khuedoan.com
+        existingSecret: forgejo-admin
+      podAnnotations:
+        "istio.io/dataplane-mode": "ambient"
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      hosts:
+        - host: code.khuedoan.com
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - hosts:
+            - code.khuedoan.com
+          secretName: forgejo-tls-certificate
+    valkey-cluster:
+      enabled: false
+    valkey:
+      enabled: false
+    postgresql:
+      enabled: false
+    postgresql-ha:
+      enabled: false

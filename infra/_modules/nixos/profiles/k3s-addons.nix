@@ -61,7 +61,7 @@
                 # url = "http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab";
                 url = "https://code.khuedoan.com/khuedoan/cloudlab";
                 ref = {
-                  branch = "flux-migration"; # TODO switch back to master
+                  branch = "master";
                 };
               };
             }
@@ -74,7 +74,7 @@
               };
               spec = {
                 interval = "1m";
-                path = "platform/production";
+                path = "platform/staging";
                 prune = true;
                 sourceRef = {
                   kind = "GitRepository";
