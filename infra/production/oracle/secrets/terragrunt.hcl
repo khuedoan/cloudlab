@@ -20,6 +20,7 @@ inputs = {
   }
 
   sources = {
+    argocd_server_secret_key    = { random = true }
     dex_admin_password_hash     = { value = include.root.locals.secrets.dex_admin_password_hash }
     dex_khuedoan_password_hash  = { value = include.root.locals.secrets.dex_khuedoan_password_hash }
     dex_argocd_client_secret    = { random = true }
@@ -51,6 +52,7 @@ inputs = {
     "argocd/argocd-secret" = {
       data = {
         "oidc.dex.clientSecret" = "dex_argocd_client_secret"
+        "server.secretkey"      = "argocd_server_secret_key"
       }
     }
     "monitoring/grafana-secrets" = {
