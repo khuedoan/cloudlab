@@ -4,6 +4,13 @@
 {
   services = {
     k3s = {
+      # TODO we may run into consistency problem with multiple master nodes:
+      # From https://docs.k3s.io/installation/packaged-components:
+      # If you have multiple server nodes, and place additional AddOn manifests on
+      # more than one server, it is your responsibility to ensure that files stay
+      # in sync across those nodes. K3s does not sync AddOn content between
+      # nodes, and cannot guarantee correct behavior if different servers attempt
+      # to deploy conflicting manifests.
       manifests = {
         flux = {
           source = pkgs.runCommand "flux-install-manifest" {
@@ -38,6 +45,44 @@
               --namespace registry \
               --values ${./values/registry.yaml} > $out/registry.yaml
           '';
+        };
+        gitops = {
+          content = [
+            {
+              apiVersion = "source.toolkit.fluxcd.io/v1";
+              kind = "GitRepository";
+              metadata = {
+                name = "gitops";
+                namespace = "flux-system";
+              };
+              spec = {
+                interval = "1m";
+                # TODO use internal URL
+                # url = "http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab";
+                url = "https://code.khuedoan.com/khuedoan/cloudlab";
+                ref = {
+                  branch = "flux-migration"; # TODO switch back to master
+                };
+              };
+            }
+            {
+              apiVersion = "kustomize.toolkit.fluxcd.io/v1";
+              kind = "Kustomization";
+              metadata = {
+                name = "platform";
+                namespace = "flux-system";
+              };
+              spec = {
+                interval = "1m";
+                path = "platform/production";
+                prune = true;
+                sourceRef = {
+                  kind = "GitRepository";
+                  name = "gitops";
+                };
+              };
+            }
+          ];
         };
       };
     };
