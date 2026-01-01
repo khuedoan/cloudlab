@@ -1,0 +1,49 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bank-vaults
+  namespace: flux-system
+spec:
+  type: oci
+  url: oci://ghcr.io/bank-vaults/helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vault-operator
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: vault-operator
+      version: 1.23.0
+      sourceRef:
+        kind: HelmRepository
+        name: bank-vaults
+  releaseName: vault-operator
+  targetNamespace: vault
+  install:
+    createNamespace: true
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vault-secrets-webhook
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: vault-secrets-webhook
+      version: 1.23.0
+      sourceRef:
+        kind: HelmRepository
+        name: bank-vaults
+  releaseName: vault-secrets-webhook
+  targetNamespace: vault
+  install:
+    createNamespace: true
+  values:
+    env:
+      VAULT_ADDR: http://vault-cluster.vault.svc.cluster.local:8200
