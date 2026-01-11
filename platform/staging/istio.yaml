@@ -84,3 +84,19 @@ spec:
   targetNamespace: istio-system
   values:
     profile: ambient
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+  namespace: istio-system # TODO dedicated namespace?
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: default
+    hostname: "*.staging.khuedoan.com" # TODO make this var/configurable
+    port: 80 # TODO HTTPS by default, only use HTTP for ACME HTTP-01
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
