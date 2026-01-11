@@ -35,8 +35,8 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: vault-secrets-webhook
-      version: 1.23.0
+      chart: vault-secrets-webhook-helm
+      version: 1.22.2
       sourceRef:
         kind: HelmRepository
         name: bank-vaults
