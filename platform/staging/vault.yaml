@@ -111,26 +111,6 @@ spec:
                 path: secret
                 type: kv
             image: docker.io/hashicorp/vault:1.20.2
-            ingress:
-              annotations:
-                cert-manager.io/cluster-issuer: letsencrypt-prod
-              spec:
-                ingressClassName: nginx
-                rules:
-                - host: vault.cloudlab.khuedoan.com
-                  http:
-                    paths:
-                    - backend:
-                        service:
-                          name: vault-cluster
-                          port:
-                            number: 8200
-                      path: /
-                      pathType: Prefix
-                tls:
-                - hosts:
-                  - vault.cloudlab.khuedoan.com
-                  secretName: vault-tls-certificate
             serviceAccount: vault
             size: 1
             unsealConfig:
@@ -143,6 +123,24 @@ spec:
             - name: vault-data
               persistentVolumeClaim:
                 claimName: vault-data
+    route:
+      main:
+        kind: HTTPRoute
+        parentRefs:
+          - group: gateway.networking.k8s.io
+            kind: Gateway
+            name: gateway
+            namespace: istio-system
+        hostnames:
+          - vault.staging.khuedoan.com
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - name: vault-cluster
+                port: 8200
     rbac:
       bindings:
         cluster:
