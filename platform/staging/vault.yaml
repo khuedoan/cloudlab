@@ -80,7 +80,7 @@ spec:
             config:
               listener:
                 tcp:
-                  address: 0.0.0.0:8200
+                  address: "[::]:8200" # TODO dual stack?
                   tls_disable: true
               storage:
                 file:
