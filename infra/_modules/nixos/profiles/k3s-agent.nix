@@ -6,6 +6,9 @@
       # https://docs.k3s.io/installation/requirements#inbound-rules-for-k3s-nodes
       allowedTCPPorts = [
         10250 # Kubelet metrics
+        # TODO probably unify with the agent config?
+        80    # HTTP
+        443   # HTTPS
       ];
       allowedUDPPorts = [
         51820 # Flannel Wireguard with IPv4
