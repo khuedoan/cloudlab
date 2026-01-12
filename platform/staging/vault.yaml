@@ -46,7 +46,7 @@ spec:
     createNamespace: true
   values:
     env:
-      VAULT_ADDR: http://vault-cluster.vault.svc.cluster.local:8200
+      VAULT_ADDR: http://vault.vault.svc.cluster.local:8200
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -118,11 +118,11 @@ spec:
                 secretNamespace: '{{ .Release.Namespace }}'
             volumeMounts:
             - mountPath: /vault/data
-              name: vault-data
+              name: vault
             volumes:
-            - name: vault-data
+            - name: vault
               persistentVolumeClaim:
-                claimName: vault-data
+                claimName: vault
     route:
       main:
         kind: HTTPRoute
@@ -139,7 +139,7 @@ spec:
                   type: PathPrefix
                   value: /
             backendRefs:
-              - name: vault-cluster
+              - name: vault
                 port: 8200
     rbac:
       bindings:
