@@ -48,6 +48,16 @@
                   kubernetes
                 ]
               ))
+
+              (pkgs.buildGoModule {
+                pname = "toolbox";
+                version = "0.1.0";
+                src = builtins.path {
+                  path = ./toolbox;
+                  name = "toolbox-src";
+                };
+                vendorHash = "sha256-Z4I6mwUG2CEeOuOi1AVP2x0azlOt4kboPjrLOGtj90Q=";
+              })
             ];
           };
       });
