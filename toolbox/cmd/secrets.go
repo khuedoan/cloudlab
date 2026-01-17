@@ -9,11 +9,13 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/log"
+	"github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
@@ -40,22 +42,41 @@ var secretsCmd = &cobra.Command{
 	RunE:  runSecrets,
 }
 
+// SecretsConfig is the root configuration structure
+// Format:
+//
+//	secrets:
+//	  secret/path:
+//	    KEY_NAME:
+//	      type: random|ssh|manual
+//	      ...
+type SecretsConfig struct {
+	Secrets map[string]map[string]SecretSpec `yaml:"secrets"`
+}
+
 type SecretSpec struct {
-	Path        string `yaml:"path"`
 	Type        string `yaml:"type"`
 	Length      int    `yaml:"length,omitempty"`
 	Algorithm   string `yaml:"algorithm,omitempty"`
+	PublicKey   string `yaml:"public_key,omitempty"`
 	Description string `yaml:"description,omitempty"`
 }
 
-type SecretsConfig struct {
-	Secrets []SecretSpec `yaml:"secrets"`
+type secretEntry struct {
+	path    string
+	dataKey string
+	spec    SecretSpec
 }
 
 func runSecrets(cmd *cobra.Command, args []string) error {
 	config, err := loadSecretsConfig(specFile)
 	if err != nil {
 		return fmt.Errorf("load spec file: %w", err)
+	}
+
+	entries, err := parseAndValidateConfig(config)
+	if err != nil {
+		return fmt.Errorf("validate config: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), connectTimeout)
@@ -73,9 +94,24 @@ func runSecrets(cmd *cobra.Command, args []string) error {
 	defer client.Close()
 	log.Debug("connected to cluster")
 
-	for _, spec := range config.Secrets {
-		if err := processSecret(ctx, client, spec); err != nil {
-			return fmt.Errorf("process secret %q: %w", spec.Path, err)
+	var autoEntries, manualEntries []secretEntry
+	for _, e := range entries {
+		if e.spec.Type == "manual" {
+			manualEntries = append(manualEntries, e)
+		} else {
+			autoEntries = append(autoEntries, e)
+		}
+	}
+
+	for _, e := range autoEntries {
+		if err := processSecret(ctx, client.Vault(), e); err != nil {
+			return fmt.Errorf("process secret %s#%s: %w", e.path, e.dataKey, err)
+		}
+	}
+
+	for _, e := range manualEntries {
+		if err := processSecret(ctx, client.Vault(), e); err != nil {
+			return fmt.Errorf("process secret %s#%s: %w", e.path, e.dataKey, err)
 		}
 	}
 
@@ -97,74 +133,56 @@ func loadSecretsConfig(path string) (*SecretsConfig, error) {
 	return &config, nil
 }
 
-func processSecret(ctx context.Context, client *cluster.Client, spec SecretSpec) error {
-	mount, secretPath, err := parsePath(spec.Path)
-	if err != nil {
-		return err
+func parseAndValidateConfig(config *SecretsConfig) ([]secretEntry, error) {
+	var entries []secretEntry
+
+	paths := make([]string, 0, len(config.Secrets))
+	for path := range config.Secrets {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		keys := config.Secrets[path]
+
+		dataKeys := make([]string, 0, len(keys))
+		for k := range keys {
+			dataKeys = append(dataKeys, k)
+		}
+		sort.Strings(dataKeys)
+
+		for _, dataKey := range dataKeys {
+			spec := keys[dataKey]
+
+			if err := validateSpec(path, dataKey, spec); err != nil {
+				return nil, err
+			}
+
+			entries = append(entries, secretEntry{
+				path:    path,
+				dataKey: dataKey,
+				spec:    spec,
+			})
+		}
 	}
 
-	existing, err := client.Vault().KVv2(mount).Get(ctx, secretPath)
-	if err == nil && existing != nil {
-		log.Info("secret already exists, skipping", "path", spec.Path)
-		return nil
-	}
-
-	secretData, err := generateSecretData(spec)
-	if err != nil {
-		return err
-	}
-
-	if _, err := client.Vault().KVv2(mount).Put(ctx, secretPath, secretData); err != nil {
-		return fmt.Errorf("write to Vault: %w", err)
-	}
-
-	return nil
+	return entries, nil
 }
 
-func generateSecretData(spec SecretSpec) (map[string]interface{}, error) {
+func validateSpec(path, dataKey string, spec SecretSpec) error {
 	switch spec.Type {
 	case "random":
-		length := spec.Length
-		if length == 0 {
-			length = defaultKeyLength
-		}
-		value, err := generateRandomString(length)
-		if err != nil {
-			return nil, fmt.Errorf("generate random string: %w", err)
-		}
-		log.Info("generated random secret", "path", spec.Path)
-		return map[string]interface{}{"value": value}, nil
-
+		// valid
 	case "ssh":
-		algorithm := spec.Algorithm
-		if algorithm == "" {
-			algorithm = "ed25519"
-		}
-		privateKey, publicKey, err := generateSSHKeypair(algorithm)
-		if err != nil {
-			return nil, fmt.Errorf("generate SSH keypair: %w", err)
-		}
-		log.Info("generated SSH keypair", "algorithm", algorithm, "path", spec.Path)
-		return map[string]interface{}{
-			"private_key": privateKey,
-			"public_key":  publicKey,
-		}, nil
-
+		// valid
 	case "manual":
-		description := spec.Description
-		if description == "" {
-			description = fmt.Sprintf("Enter value for %s", spec.Path)
-		}
-		value, err := promptForSecret(description)
-		if err != nil {
-			return nil, fmt.Errorf("prompt for secret: %w", err)
-		}
-		log.Info("stored manual secret", "path", spec.Path)
-		return map[string]interface{}{"value": value}, nil
-
+		// valid
+	case "":
+		return fmt.Errorf("%s#%s: type is required", path, dataKey)
 	default:
-		return nil, fmt.Errorf("unknown secret type: %s", spec.Type)
+		return fmt.Errorf("%s#%s: unknown type %q", path, dataKey, spec.Type)
 	}
+	return nil
 }
 
 func parsePath(fullPath string) (mount, path string, err error) {
@@ -173,6 +191,109 @@ func parsePath(fullPath string) (mount, path string, err error) {
 		return "", "", fmt.Errorf("invalid path %q: expected format mount/path", fullPath)
 	}
 	return parts[0], parts[1], nil
+}
+
+func processSecret(ctx context.Context, vault *api.Client, e secretEntry) error {
+	mount, path, err := parsePath(e.path)
+	if err != nil {
+		return err
+	}
+
+	existing, _ := vault.KVv2(mount).Get(ctx, path)
+	data := make(map[string]interface{})
+	if existing != nil && existing.Data != nil {
+		for k, v := range existing.Data {
+			data[k] = v
+		}
+	}
+
+	keysToCheck := []string{e.dataKey}
+	if e.spec.Type == "ssh" {
+		pubKey := e.spec.PublicKey
+		if pubKey == "" {
+			pubKey = e.dataKey + ".pub"
+		}
+		keysToCheck = append(keysToCheck, pubKey)
+	}
+
+	allExist := true
+	for _, k := range keysToCheck {
+		if _, exists := data[k]; !exists {
+			allExist = false
+			break
+		}
+	}
+	if allExist {
+		log.Info("secret already exists, skipping", "path", e.path, "key", e.dataKey)
+		return nil
+	}
+
+	newData, err := generateSecretData(e)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range newData {
+		data[k] = v
+	}
+
+	if _, err := vault.KVv2(mount).Put(ctx, path, data); err != nil {
+		return fmt.Errorf("write to Vault: %w", err)
+	}
+
+	return nil
+}
+
+func generateSecretData(e secretEntry) (map[string]interface{}, error) {
+	switch e.spec.Type {
+	case "random":
+		length := e.spec.Length
+		if length == 0 {
+			length = defaultKeyLength
+		}
+		value, err := generateRandomString(length)
+		if err != nil {
+			return nil, fmt.Errorf("generate random string: %w", err)
+		}
+		log.Info("generated random secret", "path", e.path, "key", e.dataKey)
+		return map[string]interface{}{e.dataKey: value}, nil
+
+	case "ssh":
+		algorithm := e.spec.Algorithm
+		if algorithm == "" {
+			algorithm = "ed25519"
+		}
+		privateKey, publicKey, err := generateSSHKeypair(algorithm)
+		if err != nil {
+			return nil, fmt.Errorf("generate SSH keypair: %w", err)
+		}
+
+		pubKeyName := e.spec.PublicKey
+		if pubKeyName == "" {
+			pubKeyName = e.dataKey + ".pub"
+		}
+
+		log.Info("generated SSH keypair", "algorithm", algorithm, "path", e.path, "key", e.dataKey)
+		return map[string]interface{}{
+			e.dataKey:  privateKey,
+			pubKeyName: publicKey,
+		}, nil
+
+	case "manual":
+		description := e.spec.Description
+		if description == "" {
+			description = fmt.Sprintf("Enter value for %s#%s", e.path, e.dataKey)
+		}
+		value, err := promptForSecret(description)
+		if err != nil {
+			return nil, fmt.Errorf("prompt for secret: %w", err)
+		}
+		log.Info("stored manual secret", "path", e.path, "key", e.dataKey)
+		return map[string]interface{}{e.dataKey: value}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown secret type: %s", e.spec.Type)
+	}
 }
 
 func generateRandomString(length int) (string, error) {

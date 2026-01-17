@@ -56,7 +56,7 @@
                   path = ./toolbox;
                   name = "toolbox-src";
                 };
-                vendorHash = "sha256-Z4I6mwUG2CEeOuOi1AVP2x0azlOt4kboPjrLOGtj90Q=";
+                vendorHash = "sha256-x1C5eVVI4+a/Rj1MPvR2t1YF7wAyrk5ZeaghhA1k6Po=";
               })
             ];
           };
