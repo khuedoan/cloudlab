@@ -1,4 +1,4 @@
-package secrets
+package cmd
 
 import (
 	"context"
@@ -6,18 +6,15 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
-	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/log"
-	"github.com/hashicorp/vault/api"
+	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 
@@ -25,102 +22,59 @@ import (
 )
 
 const (
-	vaultNamespace   = "vault"
-	vaultService     = "svc/vault"
-	vaultPort        = 8200
-	connectTimeout   = 30 * time.Second
-	retryInterval    = 1 * time.Second
 	rsaKeyBits       = 4096
 	defaultKeyLength = 32
+	connectTimeout   = 30 * time.Second
 )
 
-// SecretSpec defines a single secret specification
+var specFile string
+
+func init() {
+	secretsCmd.Flags().StringVar(&specFile, "spec", "", "Path to secrets specification YAML file")
+	secretsCmd.MarkFlagRequired("spec")
+}
+
+var secretsCmd = &cobra.Command{
+	Use:   "secrets",
+	Short: "Manage secrets in Vault",
+	RunE:  runSecrets,
+}
+
 type SecretSpec struct {
 	Path        string `yaml:"path"`
-	Type        string `yaml:"type"` // random, ssh, manual
+	Type        string `yaml:"type"`
 	Length      int    `yaml:"length,omitempty"`
-	Algorithm   string `yaml:"algorithm,omitempty"` // ed25519, rsa (for ssh type)
+	Algorithm   string `yaml:"algorithm,omitempty"`
 	Description string `yaml:"description,omitempty"`
 }
 
-// Config is the root configuration structure
-type Config struct {
+type SecretsConfig struct {
 	Secrets []SecretSpec `yaml:"secrets"`
 }
 
-func init() {
-	log.SetReportTimestamp(false)
-}
-
-// Run executes the secrets subcommand
-func Run() error {
-	var hostsFile, host, sshUser, sshKey, specFile string
-	flag.StringVar(&hostsFile, "hosts-file", "", "Path to hosts.json file")
-	flag.StringVar(&host, "host", "", "Host name to connect to (e.g., kube-1)")
-	flag.StringVar(&sshUser, "ssh-user", "root", "SSH user")
-	flag.StringVar(&sshKey, "ssh-key", "", "Path to SSH private key (default: ~/.ssh/id_ed25519)")
-	flag.StringVar(&specFile, "spec", "", "Path to secrets specification YAML file")
-	flag.Parse()
-
-	// Validate required flags
-	required := map[string]string{
-		"hosts-file": hostsFile,
-		"host":       host,
-		"spec":       specFile,
-	}
-	for name, val := range required {
-		if val == "" {
-			return fmt.Errorf("--%s must be provided", name)
-		}
-	}
-
-	// Default SSH key path
-	if sshKey == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("get home directory: %w", err)
-		}
-		sshKey = filepath.Join(home, ".ssh", "id_ed25519")
-	}
-
-	config, err := loadConfig(specFile)
+func runSecrets(cmd *cobra.Command, args []string) error {
+	config, err := loadSecretsConfig(specFile)
 	if err != nil {
 		return fmt.Errorf("load spec file: %w", err)
 	}
 
-	hostAddr, err := cluster.LoadHost(hostsFile, host)
-	if err != nil {
-		return fmt.Errorf("load hosts file: %w", err)
-	}
-	log.Debug("resolved host", "host", host, "addr", hostAddr)
+	ctx, cancel := context.WithTimeout(cmd.Context(), connectTimeout)
+	defer cancel()
 
-	conn, err := cluster.Connect(
-		cluster.SSHConfig{Host: hostAddr, User: sshUser, KeyPath: sshKey},
-		cluster.ServiceConfig{Namespace: vaultNamespace, Name: vaultService, Port: vaultPort},
-	)
+	client, err := cluster.NewClient(ctx, cluster.ClientConfig{
+		HostsFile: hostsFile,
+		Host:      host,
+		SSHUser:   sshUser,
+		SSHKey:    sshKey,
+	})
 	if err != nil {
 		return fmt.Errorf("connect to cluster: %w", err)
 	}
-	defer conn.Close()
-	log.Debug("connected to cluster", "addr", conn.LocalAddr)
+	defer client.Close()
+	log.Debug("connected to cluster")
 
-	vaultToken, err := getVaultToken(conn)
-	if err != nil {
-		return fmt.Errorf("get Vault token: %w", err)
-	}
-	log.Debug("retrieved Vault root token")
-
-	vaultAddr := "http://" + conn.LocalAddr
-	vaultClient, err := waitForVault(vaultAddr, vaultToken, connectTimeout)
-	if err != nil {
-		return fmt.Errorf("connect to Vault: %w", err)
-	}
-	log.Debug("connected to Vault")
-
-	// Process secrets
-	ctx := context.Background()
 	for _, spec := range config.Secrets {
-		if err := processSecret(ctx, vaultClient, spec); err != nil {
+		if err := processSecret(ctx, client, spec); err != nil {
 			return fmt.Errorf("process secret %q: %w", spec.Path, err)
 		}
 	}
@@ -129,13 +83,13 @@ func Run() error {
 	return nil
 }
 
-func loadConfig(path string) (*Config, error) {
+func loadSecretsConfig(path string) (*SecretsConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
 
-	var config Config
+	var config SecretsConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("parse YAML: %w", err)
 	}
@@ -143,57 +97,13 @@ func loadConfig(path string) (*Config, error) {
 	return &config, nil
 }
 
-func getVaultToken(conn *cluster.Connector) (string, error) {
-	cmd := fmt.Sprintf(
-		`kubectl get secret vault-unseal-keys -n %s -o template='{{ index .data "vault-root" }}'`,
-		vaultNamespace,
-	)
-
-	output, err := conn.RunCommand(cmd)
-	if err != nil {
-		return "", err
-	}
-
-	token, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(output)))
-	if err != nil {
-		return "", fmt.Errorf("decode token: %w", err)
-	}
-
-	return string(token), nil
-}
-
-func waitForVault(addr, token string, timeout time.Duration) (*api.Client, error) {
-	config := api.DefaultConfig()
-	config.Address = addr
-
-	client, err := api.NewClient(config)
-	if err != nil {
-		return nil, fmt.Errorf("create client: %w", err)
-	}
-	client.SetToken(token)
-
-	deadline := time.Now().Add(timeout)
-	var lastErr error
-
-	for time.Now().Before(deadline) {
-		if _, err := client.Sys().Health(); err == nil {
-			return client, nil
-		} else {
-			lastErr = err
-		}
-		time.Sleep(retryInterval)
-	}
-
-	return nil, fmt.Errorf("timeout after %v: %w", timeout, lastErr)
-}
-
-func processSecret(ctx context.Context, client *api.Client, spec SecretSpec) error {
+func processSecret(ctx context.Context, client *cluster.Client, spec SecretSpec) error {
 	mount, secretPath, err := parsePath(spec.Path)
 	if err != nil {
 		return err
 	}
 
-	existing, err := client.KVv2(mount).Get(ctx, secretPath)
+	existing, err := client.Vault().KVv2(mount).Get(ctx, secretPath)
 	if err == nil && existing != nil {
 		log.Info("secret already exists, skipping", "path", spec.Path)
 		return nil
@@ -204,7 +114,7 @@ func processSecret(ctx context.Context, client *api.Client, spec SecretSpec) err
 		return err
 	}
 
-	if _, err := client.KVv2(mount).Put(ctx, secretPath, secretData); err != nil {
+	if _, err := client.Vault().KVv2(mount).Put(ctx, secretPath, secretData); err != nil {
 		return fmt.Errorf("write to Vault: %w", err)
 	}
 
@@ -257,8 +167,6 @@ func generateSecretData(spec SecretSpec) (map[string]interface{}, error) {
 	}
 }
 
-// parsePath extracts the mount and secret path from a full path.
-// Expected format: mount/path/to/secret (e.g., "secret/myapp/db-password")
 func parsePath(fullPath string) (mount, path string, err error) {
 	parts := strings.SplitN(fullPath, "/", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {

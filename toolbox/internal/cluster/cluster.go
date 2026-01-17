@@ -1,21 +1,25 @@
 package cluster
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 )
 
 const (
-	defaultSSHPort    = 22
-	defaultSSHTimeout = 10 * time.Second
+	defaultSSHPort      = 22
+	defaultSSHTimeout   = 10 * time.Second
+	healthCheckInterval = 500 * time.Millisecond
 )
 
 type SSHConfig struct {
@@ -32,45 +36,87 @@ type ServiceConfig struct {
 }
 
 type Connector struct {
-	LocalAddr      string
-	sshClient      *ssh.Client
-	portFwdSession *ssh.Session
-	listener       net.Listener
+	sshClient *ssh.Client
+	tunnels   []*tunnel
+	mu        sync.Mutex
 }
 
-func Connect(sshCfg SSHConfig, svcCfg ServiceConfig) (*Connector, error) {
-	if sshCfg.Timeout == 0 {
-		sshCfg.Timeout = defaultSSHTimeout
+type ServiceTunnel struct {
+	LocalAddr string
+}
+
+type tunnel struct {
+	listener   net.Listener
+	session    *ssh.Session
+	localPort  int
+	remotePort int
+	done       chan struct{}
+}
+
+func Connect(cfg SSHConfig) (*Connector, error) {
+	if cfg.Timeout == 0 {
+		cfg.Timeout = defaultSSHTimeout
 	}
 
-	sshClient, err := dialSSH(sshCfg)
+	sshClient, err := dialSSH(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("ssh connect: %w", err)
 	}
 
-	portFwdSession, err := startPortForward(sshClient, svcCfg)
+	return &Connector{
+		sshClient: sshClient,
+		tunnels:   make([]*tunnel, 0),
+	}, nil
+}
+
+func (c *Connector) Forward(ctx context.Context, svc ServiceConfig) (*ServiceTunnel, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	session, err := c.sshClient.NewSession()
 	if err != nil {
-		sshClient.Close()
-		return nil, fmt.Errorf("kubectl port-forward: %w", err)
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	cmd := fmt.Sprintf(
+		"exec kubectl port-forward %s -n %s %d:%d",
+		svc.Name, svc.Namespace, svc.Port, svc.Port,
+	)
+
+	if err := session.Start(cmd); err != nil {
+		session.Close()
+		return nil, fmt.Errorf("start port-forward: %w", err)
 	}
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		portFwdSession.Signal(ssh.SIGTERM)
-		portFwdSession.Close()
-		sshClient.Close()
+		session.Signal(ssh.SIGTERM)
+		session.Close()
 		return nil, fmt.Errorf("listen: %w", err)
 	}
 
 	localPort := listener.Addr().(*net.TCPAddr).Port
-	go runTunnel(sshClient, listener, svcCfg.Port)
+	done := make(chan struct{})
 
-	return &Connector{
-		LocalAddr:      fmt.Sprintf("127.0.0.1:%d", localPort),
-		sshClient:      sshClient,
-		portFwdSession: portFwdSession,
-		listener:       listener,
-	}, nil
+	t := &tunnel{
+		listener:   listener,
+		session:    session,
+		localPort:  localPort,
+		remotePort: svc.Port,
+		done:       done,
+	}
+
+	go c.runTunnel(t)
+
+	c.tunnels = append(c.tunnels, t)
+
+	localAddr := fmt.Sprintf("127.0.0.1:%d", localPort)
+	if err := waitForService(ctx, localAddr); err != nil {
+		c.closeTunnel(t)
+		return nil, fmt.Errorf("service not reachable: %w", err)
+	}
+
+	return &ServiceTunnel{LocalAddr: localAddr}, nil
 }
 
 func (c *Connector) RunCommand(cmd string) ([]byte, error) {
@@ -89,18 +135,17 @@ func (c *Connector) RunCommand(cmd string) ([]byte, error) {
 }
 
 func (c *Connector) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	var errs []error
 
-	if c.listener != nil {
-		if err := c.listener.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("close listener: %w", err))
+	for _, t := range c.tunnels {
+		if err := c.closeTunnel(t); err != nil {
+			errs = append(errs, err)
 		}
 	}
-
-	if c.portFwdSession != nil {
-		_ = c.portFwdSession.Signal(ssh.SIGTERM)
-		c.portFwdSession.Close()
-	}
+	c.tunnels = nil
 
 	if c.sshClient != nil {
 		if err := c.sshClient.Close(); err != nil {
@@ -112,6 +157,101 @@ func (c *Connector) Close() error {
 		return errors.Join(errs...)
 	}
 	return nil
+}
+
+func (c *Connector) closeTunnel(t *tunnel) error {
+	var errs []error
+
+	close(t.done)
+
+	if t.listener != nil {
+		if err := t.listener.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("close listener: %w", err))
+		}
+	}
+
+	if t.session != nil {
+		_ = t.session.Signal(ssh.SIGTERM)
+		t.session.Close()
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+	return nil
+}
+
+func (c *Connector) runTunnel(t *tunnel) {
+	for {
+		select {
+		case <-t.done:
+			return
+		default:
+		}
+
+		localConn, err := t.listener.Accept()
+		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
+			continue
+		}
+
+		go c.handleTunnelConn(localConn, t.remotePort)
+	}
+}
+
+func (c *Connector) handleTunnelConn(localConn net.Conn, remotePort int) {
+	defer localConn.Close()
+
+	remoteAddr := fmt.Sprintf("127.0.0.1:%d", remotePort)
+	remoteConn, err := c.sshClient.Dial("tcp", remoteAddr)
+	if err != nil {
+		return
+	}
+	defer remoteConn.Close()
+
+	done := make(chan struct{}, 2)
+
+	go func() {
+		io.Copy(remoteConn, localConn)
+		done <- struct{}{}
+	}()
+
+	go func() {
+		io.Copy(localConn, remoteConn)
+		done <- struct{}{}
+	}()
+
+	<-done
+}
+
+func waitForService(ctx context.Context, addr string) error {
+	client := &http.Client{Timeout: 2 * time.Second}
+	url := "http://" + addr
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		resp, err := client.Get(url)
+		if err == nil {
+			resp.Body.Close()
+			return nil
+		}
+
+		// Also try TCP connect for non-HTTP services
+		conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+
+		time.Sleep(healthCheckInterval)
+	}
 }
 
 type HostInfo struct {
@@ -177,62 +317,4 @@ func dialSSH(cfg SSHConfig) (*ssh.Client, error) {
 	}
 
 	return client, nil
-}
-
-func startPortForward(sshClient *ssh.Client, svc ServiceConfig) (*ssh.Session, error) {
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("create session: %w", err)
-	}
-
-	cmd := fmt.Sprintf(
-		"exec kubectl port-forward %s -n %s %d:%d",
-		svc.Name, svc.Namespace, svc.Port, svc.Port,
-	)
-
-	if err := session.Start(cmd); err != nil {
-		session.Close()
-		return nil, fmt.Errorf("start: %w", err)
-	}
-
-	return session, nil
-}
-
-func runTunnel(sshClient *ssh.Client, listener net.Listener, remotePort int) {
-	for {
-		localConn, err := listener.Accept()
-		if err != nil {
-			if errors.Is(err, net.ErrClosed) {
-				return
-			}
-			continue
-		}
-
-		go handleTunnelConn(sshClient, localConn, remotePort)
-	}
-}
-
-func handleTunnelConn(sshClient *ssh.Client, localConn net.Conn, remotePort int) {
-	defer localConn.Close()
-
-	remoteAddr := fmt.Sprintf("127.0.0.1:%d", remotePort)
-	remoteConn, err := sshClient.Dial("tcp", remoteAddr)
-	if err != nil {
-		return
-	}
-	defer remoteConn.Close()
-
-	done := make(chan struct{}, 2)
-
-	go func() {
-		io.Copy(remoteConn, localConn)
-		done <- struct{}{}
-	}()
-
-	go func() {
-		io.Copy(localConn, remoteConn)
-		done <- struct{}{}
-	}()
-
-	<-done
 }
