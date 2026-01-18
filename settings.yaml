@@ -1,0 +1,14 @@
+secrets:
+  secret/khuedoan/notes/password:
+    VALUE:
+      type: random
+      length: 32  # optional, default 32
+  secret/git/deploy:
+    admin:
+      type: ssh
+  secret/platform/cloudflare:
+    API_TOKEN:
+      type: manual
+      description: |
+        Enter Cloudflare API token:
+        (Generate it from https://dash.cloudflare.com -> Manage account -> Account API tokens)
