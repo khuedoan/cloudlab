@@ -29,11 +29,11 @@ const (
 	connectTimeout   = 30 * time.Second
 )
 
-var specFile string
+var settingsFile string
 
 func init() {
-	secretsCmd.Flags().StringVar(&specFile, "spec", "", "Path to secrets specification YAML file")
-	secretsCmd.MarkFlagRequired("spec")
+	secretsCmd.Flags().StringVar(&settingsFile, "settings", "", "Path to settings YAML file")
+	secretsCmd.MarkFlagRequired("settings")
 }
 
 var secretsCmd = &cobra.Command{
@@ -51,10 +51,10 @@ var secretsCmd = &cobra.Command{
 //	      type: random|ssh|manual
 //	      ...
 type SecretsConfig struct {
-	Secrets map[string]map[string]SecretSpec `yaml:"secrets"`
+	Secrets map[string]map[string]SecretSettings `yaml:"secrets"`
 }
 
-type SecretSpec struct {
+type SecretSettings struct {
 	Type        string `yaml:"type"`
 	Length      int    `yaml:"length,omitempty"`
 	Algorithm   string `yaml:"algorithm,omitempty"`
@@ -63,15 +63,15 @@ type SecretSpec struct {
 }
 
 type secretEntry struct {
-	path    string
-	dataKey string
-	spec    SecretSpec
+	path     string
+	dataKey  string
+	settings SecretSettings
 }
 
 func runSecrets(cmd *cobra.Command, args []string) error {
-	config, err := loadSecretsConfig(specFile)
+	config, err := loadSecretsConfig(settingsFile)
 	if err != nil {
-		return fmt.Errorf("load spec file: %w", err)
+		return fmt.Errorf("load settings file: %w", err)
 	}
 
 	entries, err := parseAndValidateConfig(config)
@@ -96,7 +96,7 @@ func runSecrets(cmd *cobra.Command, args []string) error {
 
 	var autoEntries, manualEntries []secretEntry
 	for _, e := range entries {
-		if e.spec.Type == "manual" {
+		if e.settings.Type == "manual" {
 			manualEntries = append(manualEntries, e)
 		} else {
 			autoEntries = append(autoEntries, e)
@@ -152,16 +152,16 @@ func parseAndValidateConfig(config *SecretsConfig) ([]secretEntry, error) {
 		sort.Strings(dataKeys)
 
 		for _, dataKey := range dataKeys {
-			spec := keys[dataKey]
+			settings := keys[dataKey]
 
-			if err := validateSpec(path, dataKey, spec); err != nil {
+			if err := validateSettings(path, dataKey, settings); err != nil {
 				return nil, err
 			}
 
 			entries = append(entries, secretEntry{
-				path:    path,
-				dataKey: dataKey,
-				spec:    spec,
+				path:     path,
+				dataKey:  dataKey,
+				settings: settings,
 			})
 		}
 	}
@@ -169,8 +169,8 @@ func parseAndValidateConfig(config *SecretsConfig) ([]secretEntry, error) {
 	return entries, nil
 }
 
-func validateSpec(path, dataKey string, spec SecretSpec) error {
-	switch spec.Type {
+func validateSettings(path, dataKey string, settings SecretSettings) error {
+	switch settings.Type {
 	case "random":
 		// valid
 	case "ssh":
@@ -180,7 +180,7 @@ func validateSpec(path, dataKey string, spec SecretSpec) error {
 	case "":
 		return fmt.Errorf("%s#%s: type is required", path, dataKey)
 	default:
-		return fmt.Errorf("%s#%s: unknown type %q", path, dataKey, spec.Type)
+		return fmt.Errorf("%s#%s: unknown type %q", path, dataKey, settings.Type)
 	}
 	return nil
 }
@@ -208,8 +208,8 @@ func processSecret(ctx context.Context, vault *api.Client, e secretEntry) error 
 	}
 
 	keysToCheck := []string{e.dataKey}
-	if e.spec.Type == "ssh" {
-		pubKey := e.spec.PublicKey
+	if e.settings.Type == "ssh" {
+		pubKey := e.settings.PublicKey
 		if pubKey == "" {
 			pubKey = e.dataKey + ".pub"
 		}
@@ -245,9 +245,9 @@ func processSecret(ctx context.Context, vault *api.Client, e secretEntry) error 
 }
 
 func generateSecretData(e secretEntry) (map[string]interface{}, error) {
-	switch e.spec.Type {
+	switch e.settings.Type {
 	case "random":
-		length := e.spec.Length
+		length := e.settings.Length
 		if length == 0 {
 			length = defaultKeyLength
 		}
@@ -259,7 +259,7 @@ func generateSecretData(e secretEntry) (map[string]interface{}, error) {
 		return map[string]interface{}{e.dataKey: value}, nil
 
 	case "ssh":
-		algorithm := e.spec.Algorithm
+		algorithm := e.settings.Algorithm
 		if algorithm == "" {
 			algorithm = "ed25519"
 		}
@@ -268,7 +268,7 @@ func generateSecretData(e secretEntry) (map[string]interface{}, error) {
 			return nil, fmt.Errorf("generate SSH keypair: %w", err)
 		}
 
-		pubKeyName := e.spec.PublicKey
+		pubKeyName := e.settings.PublicKey
 		if pubKeyName == "" {
 			pubKeyName = e.dataKey + ".pub"
 		}
@@ -280,7 +280,7 @@ func generateSecretData(e secretEntry) (map[string]interface{}, error) {
 		}, nil
 
 	case "manual":
-		description := e.spec.Description
+		description := e.settings.Description
 		if description == "" {
 			description = fmt.Sprintf("Enter value for %s#%s", e.path, e.dataKey)
 		}
@@ -292,7 +292,7 @@ func generateSecretData(e secretEntry) (map[string]interface{}, error) {
 		return map[string]interface{}{e.dataKey: value}, nil
 
 	default:
-		return nil, fmt.Errorf("unknown secret type: %s", e.spec.Type)
+		return nil, fmt.Errorf("unknown secret type: %s", e.settings.Type)
 	}
 }
 
