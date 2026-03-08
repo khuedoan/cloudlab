@@ -15,6 +15,6 @@ inputs = {
   }
 
   tags = [
-    "production"
+    "staging"
   ]
 }
