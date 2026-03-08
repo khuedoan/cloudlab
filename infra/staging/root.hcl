@@ -41,7 +41,9 @@ generate "provider" {
     {
       hetzner = {
         provider = {
-          hcloud = {}
+          hcloud = {
+            token = local.secrets.hetzner_token
+          }
         }
       }
       proxmox = {

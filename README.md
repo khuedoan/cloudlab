@@ -157,6 +157,13 @@ cloudflare_tfstate_access_key: foo
 cloudflare_tfstate_secret_key: foo
 # https://dash.cloudflare.com -> Click on account name -> Copy account ID
 cloudflare_account_id: foo
+
+# https://console.hetzner.com -> Create new project -> Security -> API tokens -> Generate API token -> Terraform (Read & Write)
+hetzner_token: foo
+
+# Proxmox login credentials
+proxmox_username: foo
+proxmox_password: foo
 ```
 
 ## TODOs
