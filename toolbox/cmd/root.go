@@ -24,6 +24,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&sshUser, "ssh-user", "root", "SSH user")
 	rootCmd.PersistentFlags().StringVar(&sshKey, "ssh-key", defaultSSHKey(), "Path to SSH private key")
 	rootCmd.PersistentFlags().StringVar(&sshKnownHosts, "ssh-known-hosts", defaultKnownHostsFile(), "Path to SSH known_hosts file")
+
+	rootCmd.AddCommand(secretsCmd)
 }
 
 var rootCmd = &cobra.Command{
