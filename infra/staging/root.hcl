@@ -49,6 +49,8 @@ generate "provider" {
           proxmox = {
             endpoint = "https://proxmox:8006"
             insecure = true
+            username = local.secrets.proxmox_username
+            password = local.secrets.proxmox_password
           }
         }
       }
