@@ -148,6 +148,17 @@ Build the infrastructure:
 make
 ```
 
+Bootstrap secrets:
+
+```yaml
+# https://dash.cloudflare.com -> Storage & databases -> R2 -> Overview -> API Tokens -> Manage -> Create Account API Token
+cloudflare_tfstate_api_token: foo
+cloudflare_tfstate_access_key: foo
+cloudflare_tfstate_secret_key: foo
+# https://dash.cloudflare.com -> Click on account name -> Copy account ID
+cloudflare_account_id: foo
+```
+
 ## TODOs
 
 - Fix OCI plain HTTP for local development
