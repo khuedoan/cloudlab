@@ -1,5 +1,5 @@
 .POSIX:
-.PHONY: default compose infra platform apps test fmt tidy update
+.PHONY: default compose infra bootstrap platform apps test fmt tidy update
 
 env ?= $(shell ls infra | fzf --prompt "Select environment: ")
 
@@ -10,6 +10,13 @@ compose:
 
 infra:
 	cd infra/${env} && terragrunt apply --all
+
+bootstrap:
+	# TODO maybe a single bootstrap command?
+	toolbox secrets \
+		--settings settings.yaml \
+		--hosts-file infra/_modules/nixos/hosts.json \
+		--host kube-1
 
 platform:
 	# TODO don't hard code registry
