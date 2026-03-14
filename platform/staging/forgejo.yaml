@@ -67,10 +67,12 @@ spec:
         - name: SSO
           provider: 'openidConnect'
           autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
-          existingSecret: forgejo-oauth
+          key: vault:secret/data/forgejo/oauth#key
+          secret: vault:secret/data/forgejo/oauth#secret
       admin:
         email: admin@cloudlab.khuedoan.com
-        existingSecret: forgejo-admin
+        username: forgejo_admin
+        password: vault:secret/data/forgejo/admin#password
       podAnnotations:
         "istio.io/dataplane-mode": "ambient"
     ingress:

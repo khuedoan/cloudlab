@@ -12,3 +12,12 @@ secrets:
       description: |
         Enter Cloudflare API token:
         (Generate it from https://dash.cloudflare.com -> Manage account -> Account API tokens)
+  secret/forgejo/admin:
+    password:
+      type: random
+  # TODO maybe centralize to Dex
+  secret/forgejo/oauth:
+    key:
+      type: random
+    secret:
+      type: random
