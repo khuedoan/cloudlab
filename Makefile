@@ -13,6 +13,7 @@ infra:
 
 bootstrap:
 	# TODO maybe a single bootstrap command?
+	# TODO needs to wait for namespaces e.g. vault
 	toolbox secrets \
 		--settings settings.yaml \
 		--hosts-file infra/_modules/nixos/hosts.json \
