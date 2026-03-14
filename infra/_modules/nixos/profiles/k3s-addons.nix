@@ -49,7 +49,7 @@
         gateway-api = {
           source = pkgs.fetchurl {
             url = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml";
-            sha256 = "1y38fd3na4c7qp3sa2m1kmj919m1hagigv2znr1kxfkq16grk8ns";
+            sha256 = "1lnsairn0169xg4ylngaiaib3lsv9rkgqsf9ja63l0myyrvipfbk";
           };
         };
         gitops = {
