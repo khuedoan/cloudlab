@@ -40,7 +40,7 @@ spec:
           TYPE: level
         server:
           LANDING_PAGE: explore
-          ROOT_URL: https://code.khuedoan.com
+          ROOT_URL: https://code.staging.khuedoan.com
           OFFLINE_MODE: true
         repository:
           DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages
@@ -76,21 +76,13 @@ spec:
         password: vault:secret/data/forgejo/admin#password
       podAnnotations:
         "istio.io/dataplane-mode": "ambient"
-    ingress:
+    httpRoute:
       enabled: true
-      className: nginx
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-        nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      hosts:
-        - host: code.khuedoan.com
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - hosts:
-            - code.khuedoan.com
-          secretName: forgejo-tls-certificate
+      parentRefs:
+        - name: gateway
+          namespace: istio-system
+      hostnames:
+        - code.staging.khuedoan.com
     valkey-cluster:
       enabled: false
     valkey:
