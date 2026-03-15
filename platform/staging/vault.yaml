@@ -97,6 +97,11 @@ spec:
                   policies:
                   - allow_secrets
                   ttl: 1h
+                config:
+                  # Needs to be explicit, otherwise it will fallback to
+                  # https://$KUBERNETES_SERVICE_HOST & breaks on IPv6-only
+                  # cluster because the address is not bracketed
+                  kubernetes_host: https://kubernetes.default.svc.cluster.local:443
                 type: kubernetes
               policies:
               - name: allow_secrets

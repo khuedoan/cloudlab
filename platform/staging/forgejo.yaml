@@ -51,8 +51,8 @@ spec:
           OPENID_CONNECT_SCOPES: "email profile"
           USERNAME: username
         service:
-          ENABLE_INTERNAL_SIGNIN: false
-          ALLOW_ONLY_EXTERNAL_REGISTRATION: true
+          ENABLE_INTERNAL_SIGNIN: true
+          DISABLE_REGISTRATION: true
         "service.explore":
           DISABLE_USERS_PAGE: true
         actions:
@@ -63,12 +63,13 @@ spec:
           SHOW_FOOTER_VERSION: false
           SHOW_FOOTER_TEMPLATE_LOAD_TIME: false
           SHOW_FOOTER_POWERED_BY: false
-      oauth:
-        - name: SSO
-          provider: 'openidConnect'
-          autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
-          key: vault:secret/data/forgejo/oauth#key
-          secret: vault:secret/data/forgejo/oauth#secret
+      # Staging does not currently run Dex, so keep Forgejo self-contained.
+      # oauth:
+      #   - name: SSO
+      #     provider: 'openidConnect'
+      #     autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
+      #     key: vault:secret/data/forgejo/oauth#key
+      #     secret: vault:secret/data/forgejo/oauth#secret
       admin:
         email: admin@cloudlab.khuedoan.com
         username: forgejo_admin
