@@ -27,7 +27,37 @@ spec:
     createNamespace: true
   values:
     config:
+      enableGatewayAPI: true
       featureGates:
         ACMEHTTP01IngressPathTypeExact: false
     crds:
       enabled: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflare-api-token
+  namespace: cert-manager
+  annotations:
+    # TODO dedicated SA for cert-manager
+    vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+    vault.security.banzaicloud.io/vault-role: default
+    vault.security.banzaicloud.io/vault-path: kubernetes
+stringData:
+  api-token: vault:secret/data/platform/cloudflare#API_TOKEN
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
