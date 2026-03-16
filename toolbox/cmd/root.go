@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -25,6 +26,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&sshKey, "ssh-key", defaultSSHKey(), "Path to SSH private key")
 	rootCmd.PersistentFlags().StringVar(&sshKnownHosts, "ssh-known-hosts", defaultKnownHostsFile(), "Path to SSH known_hosts file")
 
+	rootCmd.AddCommand(gitopsCmd)
 	rootCmd.AddCommand(secretsCmd)
 }
 
@@ -56,4 +58,14 @@ func defaultKnownHostsFile() string {
 		return ""
 	}
 	return filepath.Join(home, ".ssh", "known_hosts")
+}
+
+func validateClusterFlags() error {
+	if hostsFile == "" {
+		return fmt.Errorf("--hosts-file is required")
+	}
+	if host == "" {
+		return fmt.Errorf("--host is required")
+	}
+	return nil
 }

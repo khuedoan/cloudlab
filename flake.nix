@@ -23,6 +23,7 @@
               age
               ansible
               ansible-lint
+              fluxcd
               fzf
               gnumake
               go
