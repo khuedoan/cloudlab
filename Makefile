@@ -11,8 +11,7 @@ compose:
 infra:
 	cd infra/${env} && terragrunt apply --all
 
-bootstrap:
-	# TODO maybe a single bootstrap command?
+bootstrap: platform
 	# TODO needs to wait for namespaces e.g. vault
 	toolbox secrets \
 		--settings settings.yaml \
@@ -20,8 +19,10 @@ bootstrap:
 		--host kube-1
 
 platform:
-	# TODO don't hard code registry
-	cd platform/${env} && oras push --format=json docker.io/khuedoan/platform-manifests:${env} .
+	toolbox gitops \
+		--path platform/${env} \
+		--hosts-file infra/_modules/nixos/hosts.json \
+		--host kube-1
 
 apps:
 	# TODO multiple env

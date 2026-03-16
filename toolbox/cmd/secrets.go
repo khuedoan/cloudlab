@@ -25,13 +25,7 @@ var secretsCmd = &cobra.Command{
 	Use:   "secrets",
 	Short: "Manage secrets in Vault",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if hostsFile == "" {
-			return fmt.Errorf("--hosts-file is required")
-		}
-		if host == "" {
-			return fmt.Errorf("--host is required")
-		}
-		return nil
+		return validateClusterFlags()
 	},
 	RunE: runSecrets,
 }
