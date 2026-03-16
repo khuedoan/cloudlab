@@ -56,18 +56,17 @@
           content = [
             {
               apiVersion = "source.toolkit.fluxcd.io/v1";
-              kind = "GitRepository";
+              kind = "OCIRepository";
               metadata = {
-                name = "gitops";
+                name = "platform";
                 namespace = "flux-system";
               };
               spec = {
-                interval = "1m";
-                # TODO use internal URL
-                # url = "http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab";
-                url = "https://code.khuedoan.com/khuedoan/cloudlab";
+                interval = "30s";
+                url = "oci://registry.registry.svc.cluster.local:5000/platform";
+                insecure = true;
                 ref = {
-                  branch = "master";
+                  tag = "latest";
                 };
               };
             }
@@ -80,11 +79,11 @@
               };
               spec = {
                 interval = "1m";
-                path = "platform/staging";
+                path = ".";
                 prune = true;
                 sourceRef = {
-                  kind = "GitRepository";
-                  name = "gitops";
+                  kind = "OCIRepository";
+                  name = "platform";
                 };
               };
             }
