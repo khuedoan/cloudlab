@@ -11,16 +11,17 @@ compose:
 infra:
 	cd infra/${env} && terragrunt apply --all
 
-bootstrap: platform
-	# TODO needs to wait for namespaces e.g. vault
-	toolbox secrets \
-		--settings settings.yaml \
-		--hosts-file infra/_modules/nixos/hosts.json \
-		--host kube-1
+bootstrap: platform secrets
 
 platform:
 	toolbox gitops \
 		--path platform/${env} \
+		--hosts-file infra/_modules/nixos/hosts.json \
+		--host kube-1
+
+secrets:
+	toolbox secrets \
+		--settings settings.yaml \
 		--hosts-file infra/_modules/nixos/hosts.json \
 		--host kube-1
 
