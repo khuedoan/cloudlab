@@ -2,7 +2,7 @@ secrets:
   secret/khuedoan/notes/password:
     VALUE:
       type: random
-      length: 32  # optional, default 32
+      length: 32 # optional, default 32
   secret/git/deploy:
     admin:
       type: ssh
@@ -21,3 +21,15 @@ secrets:
       type: random
     secret:
       type: random
+vendors:
+  vendor/charts/dex:
+    kind: chart
+    repo_url: https://charts.dexidp.io
+    chart: dex
+    versions:
+      - 0.23.0
+  vendor/images/dexidp/dex:
+    kind: image
+    source: ghcr.io/dexidp/dex
+    versions:
+      - v2.43.1
