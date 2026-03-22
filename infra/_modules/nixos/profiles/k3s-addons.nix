@@ -16,10 +16,9 @@
           source = pkgs.runCommand "flux-install-manifest" {
             nativeBuildInputs = [ pkgs.fluxcd ];
           } ''
-            mkdir -p $out
             flux install \
               --components=source-controller,kustomize-controller,helm-controller \
-              --export > $out/flux.yaml
+              --export > $out
           '';
         };
         registry-namespace = {
