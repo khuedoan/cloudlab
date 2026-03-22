@@ -1,4 +1,4 @@
-{ modulesPath, ... }:
+{ modulesPath, pkgs, ... }:
 
 {
   imports = [
@@ -76,6 +76,14 @@
       k3s_token = {};
     };
   };
+
+  environment.etc."rancher/k3s/registries.yaml".text =
+    pkgs.lib.generators.toYAML { } {
+      # SEe ./profiles/values/registry.yaml for registry service IP
+      mirrors."registry.registry.svc.cluster.local".endpoint = [
+        "http://[fd6a:7c7b:3e12:100::f]:5000"
+      ];
+    };
 
   system.stateVersion = "25.05";
 }
