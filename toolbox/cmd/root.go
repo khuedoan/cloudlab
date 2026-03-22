@@ -28,6 +28,7 @@ func init() {
 
 	rootCmd.AddCommand(gitopsCmd)
 	rootCmd.AddCommand(secretsCmd)
+	rootCmd.AddCommand(vendorCmd)
 }
 
 var rootCmd = &cobra.Command{
