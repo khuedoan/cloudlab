@@ -28,6 +28,10 @@ spec:
   values:
     strategy:
       type: Recreate
+    deployment:
+      env:
+        - name: FORGEJO_OAUTH_SECRET
+          value: vault:secret/data/forgejo/oauth#secret
     gitea:
       config:
         database:
@@ -51,8 +55,8 @@ spec:
           OPENID_CONNECT_SCOPES: "email profile"
           USERNAME: username
         service:
-          ENABLE_INTERNAL_SIGNIN: true
-          DISABLE_REGISTRATION: true
+          ENABLE_INTERNAL_SIGNIN: false
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: true
         "service.explore":
           DISABLE_USERS_PAGE: true
         actions:
@@ -63,13 +67,14 @@ spec:
           SHOW_FOOTER_VERSION: false
           SHOW_FOOTER_TEMPLATE_LOAD_TIME: false
           SHOW_FOOTER_POWERED_BY: false
-      # Staging does not currently run Dex, so keep Forgejo self-contained.
-      # oauth:
-      #   - name: SSO
-      #     provider: 'openidConnect'
-      #     autoDiscoverUrl: https://dex.cloudlab.khuedoan.com/.well-known/openid-configuration
-      #     key: vault:secret/data/forgejo/oauth#key
-      #     secret: vault:secret/data/forgejo/oauth#secret
+      oauth:
+        - name: SSO
+          provider: "openidConnect"
+          autoDiscoverUrl: https://dex.staging.khuedoan.com/.well-known/openid-configuration
+          key: forgejo
+          # Can't use Vault syntax directly here, because it will be templated
+          # into a secret, so we need to define a separate environment variable
+          secret: ${FORGEJO_OAUTH_SECRET}
       admin:
         email: admin@cloudlab.khuedoan.com
         username: forgejo_admin
