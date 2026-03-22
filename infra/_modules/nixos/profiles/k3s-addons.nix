@@ -34,7 +34,6 @@
           source = pkgs.runCommand "registry-install-manifest" {
             nativeBuildInputs = [ pkgs.kubernetes-helm ];
           } ''
-            mkdir -p $out
             helm template --skip-tests registry ${
                 pkgs.fetchurl {
                   url = "https://github.com/project-zot/helm-charts/releases/download/zot-0.1.67/zot-0.1.67.tgz";
@@ -42,7 +41,7 @@
                 }
               } \
               --namespace registry \
-              --values ${./values/registry.yaml} > $out/registry.yaml
+              --values ${./values/registry.yaml} > $out
           '';
         };
         gateway-api = {
