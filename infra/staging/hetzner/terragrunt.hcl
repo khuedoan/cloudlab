@@ -9,11 +9,8 @@ terraform {
 
 inputs = {
   nodes = {
-    "kube-4" = {
+    "kube-1" = {
       location = "hel1"
     }
-    # "kube-5" = {
-    #   location = "nbg1"
-    # }
   }
 }
