@@ -166,6 +166,10 @@ proxmox_username: foo
 proxmox_password: foo
 ```
 
+### Operations
+
+- [Rebuild environment](docs/how-to-guides/rebuild-environment.md)
+
 ## TODOs
 
 - Fix OCI plain HTTP for local development
