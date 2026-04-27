@@ -35,7 +35,18 @@
             networking.hostName = "kube-1";
             systemd.network.networks."30-wan" = {
               matchConfig.Name = "enp1s0";
-              networkConfig.DHCP = "ipv4";
+              networkConfig = {
+                DHCP = "ipv4";
+                # TODO debug this
+                # CoreDNS runs on the IPv6-only pod network, so it cannot reach
+                # the IPv4 DNS servers advertised by Hetzner DHCP.
+                DNS = [
+                  # https://developers.cloudflare.com/1.1.1.1/ip-addresses
+                  "2606:4700:4700::1112"
+                  "2606:4700:4700::1002"
+                ];
+              };
+              dhcpV4Config.UseDNS = false;
               address = [
                 hosts.kube-1.ipv6_address
               ];
