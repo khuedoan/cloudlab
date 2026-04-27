@@ -7,11 +7,6 @@ spec:
   interval: 1h
   url: https://istio-release.storage.googleapis.com/charts
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: istio-system
----
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:

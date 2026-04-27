@@ -1,0 +1,30 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: platform-namespaces
+  namespace: flux-system
+spec:
+  interval: 30m
+  releaseName: platform-namespaces
+  targetNamespace: flux-system
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      cert-manager:
+        apiVersion: v1
+        kind: Namespace
+        forceRename: cert-manager
+      dex:
+        apiVersion: v1
+        kind: Namespace
+        forceRename: dex
+      istio-system:
+        apiVersion: v1
+        kind: Namespace
+        forceRename: istio-system
