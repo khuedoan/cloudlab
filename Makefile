@@ -41,7 +41,7 @@ apps:
 	@temporal workflow result --workflow-id apps-manual
 
 test:
-	cd test && go test
+	cd test && CLOUDLAB_ENV=${env} go test
 
 fmt:
 	nixfmt flake.nix
