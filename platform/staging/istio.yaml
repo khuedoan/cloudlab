@@ -84,6 +84,11 @@ spec:
   targetNamespace: istio-system
   values:
     profile: ambient
+    pilot:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
