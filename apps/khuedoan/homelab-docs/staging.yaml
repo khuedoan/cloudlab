@@ -61,7 +61,7 @@ route:
               value: /
         backendRefs:
           - identifier: main
-            port: http
+            port: 80
 persistence:
   source:
     type: emptyDir

@@ -32,7 +32,7 @@ route:
               value: /
         backendRefs:
           - identifier: main
-            port: http
+            port: 5006
 persistence:
   data:
     accessMode: ReadWriteOnce
