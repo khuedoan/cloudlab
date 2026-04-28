@@ -11,12 +11,54 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
+  name: dex-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: dex-secrets
+  targetNamespace: dex
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      dex-secrets:
+        apiVersion: v1
+        kind: Secret
+        forceRename: dex-secrets
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            # Keep Vault resolution on the Secret object. Inline vault: env values
+            # make Dex depend on pod mutation, and that path breaks here because
+            # the webhook cannot use the K3s image mirror config for registry lookups.
+            ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
+            KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
+            FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
   name: dex
   namespace: flux-system
 spec:
   interval: 3m
   dependsOn:
     - name: platform-namespaces
+    - name: dex-secrets
   chart:
     spec:
       chart: dex
@@ -32,10 +74,9 @@ spec:
     image:
       repository: registry.registry.svc.cluster.local/vendor/images/dexidp/dex
       tag: v2.43.1
-    env:
-      ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
-      KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
-      FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
+    envFrom:
+      - secretRef:
+          name: dex-secrets
     config:
       issuer: https://dex.staging.khuedoan.com
       storage:

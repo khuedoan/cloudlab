@@ -10,6 +10,57 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
+  name: forgejo-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: forgejo-secrets
+  targetNamespace: forgejo
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      forgejo-admin:
+        apiVersion: v1
+        kind: Secret
+        forceRename: forgejo-admin
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            username: forgejo_admin
+            password: vault:secret/data/forgejo/admin#password
+      forgejo-oauth:
+        apiVersion: v1
+        kind: Secret
+        forceRename: forgejo-oauth
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            # Forgejo expects a Kubernetes Secret for OAuth bootstrap. Creating
+            # it explicitly keeps startup independent from pod-time Vault mutation.
+            key: forgejo
+            secret: vault:secret/data/forgejo/oauth#secret
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
   name: forgejo
   namespace: flux-system
 spec:
@@ -18,6 +69,7 @@ spec:
     - name: dex
     - name: vault
     - name: vault-secrets-webhook
+    - name: forgejo-secrets
   chart:
     spec:
       chart: forgejo
@@ -32,10 +84,6 @@ spec:
   values:
     strategy:
       type: Recreate
-    deployment:
-      env:
-        - name: FORGEJO_OAUTH_SECRET
-          value: vault:secret/data/forgejo/oauth#secret
     gitea:
       config:
         database:
@@ -74,17 +122,11 @@ spec:
       oauth:
         - name: SSO
           provider: "openidConnect"
-          # Use the in-cluster Dex service for bootstrap because the single-node
-          # staging cluster cannot reliably hairpin through the public gateway.
-          autoDiscoverUrl: http://dex.dex.svc.cluster.local:5556/.well-known/openid-configuration
-          key: forgejo
-          # Can't use Vault syntax directly here, because it will be templated
-          # into a secret, so we need to define a separate environment variable
-          secret: ${FORGEJO_OAUTH_SECRET}
+          autoDiscoverUrl: https://dex.staging.khuedoan.com/.well-known/openid-configuration
+          existingSecret: forgejo-oauth
       admin:
         email: admin@cloudlab.khuedoan.com
-        username: forgejo_admin
-        password: vault:secret/data/forgejo/admin#password
+        existingSecret: forgejo-admin
       podAnnotations:
         "istio.io/dataplane-mode": "ambient"
     httpRoute:
