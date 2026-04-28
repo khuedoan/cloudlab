@@ -15,24 +15,24 @@ service:
       http:
         port: 5006
         protocol: HTTP
-ingress:
+route:
   main:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: budget.staging.khuedoan.com
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              identifier: main
-              port: http
-    tls:
-      - hosts:
-          - budget.staging.khuedoan.com
-        secretName: actualbudget-tls-certificate
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: istio-system
+    hostnames:
+      - budget.staging.khuedoan.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: main
+            port: http
 persistence:
   data:
     accessMode: ReadWriteOnce

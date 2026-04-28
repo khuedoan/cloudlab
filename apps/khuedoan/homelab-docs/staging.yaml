@@ -44,24 +44,24 @@ service:
       http:
         port: 80
         protocol: HTTP
-ingress:
+route:
   main:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: homelab.staging.khuedoan.com
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            service:
-              identifier: main
-              port: http
-    tls:
-      - hosts:
-          - homelab.staging.khuedoan.com
-        secretName: homelab-docs-tls-certificate
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: istio-system
+    hostnames:
+      - homelab.staging.khuedoan.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: main
+            port: http
 persistence:
   source:
     type: emptyDir
