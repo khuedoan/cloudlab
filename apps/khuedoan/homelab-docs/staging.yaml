@@ -1,0 +1,73 @@
+defaultPodOptions:
+  labels:
+    istio.io/dataplane-mode: ambient
+controllers:
+  main:
+    containers:
+      nginx:
+        image:
+          repository: nginx
+          tag: latest
+        probes:
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 3
+              periodSeconds: 3
+      build:
+        image:
+          repository: nixos/nix
+          tag: latest
+        workingDir: /usr/local/src
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            nix-shell -p git --command 'git clone https://github.com/khuedoan/homelab .'
+
+            while true; do
+              nix-shell -p python311Packages.mkdocs-material --command 'mkdocs build'
+              cp -RT ./site /usr/share/nginx/html
+              sleep 120
+              nix-shell -p git --command 'git fetch origin'
+              nix-shell -p git --command 'git reset --hard origin/master'
+            done
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 80
+        protocol: HTTP
+ingress:
+  main:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: homelab.staging.khuedoan.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            service:
+              identifier: main
+              port: http
+    tls:
+      - hosts:
+          - homelab.staging.khuedoan.com
+        secretName: homelab-docs-tls-certificate
+persistence:
+  source:
+    type: emptyDir
+    globalMounts:
+      - path: /usr/local/src
+  static:
+    type: emptyDir
+    globalMounts:
+      - path: /usr/share/nginx/html

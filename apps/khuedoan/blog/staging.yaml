@@ -1,0 +1,37 @@
+defaultPodOptions:
+  labels:
+    istio.io/dataplane-mode: ambient
+controllers:
+  main:
+    replicas: 2
+    strategy: RollingUpdate
+    containers:
+      main:
+        image:
+          repository: registry.registry.svc.cluster.local/khuedoan/blog
+          tag: 2c3e9c2aa204804e00db4234628f00cde03303a7
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 3000
+        protocol: HTTP
+ingress:
+  main:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: www.staging.khuedoan.com
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 3000
+    tls:
+      - hosts:
+          - www.staging.khuedoan.com
+        secretName: blog-tls-certificate

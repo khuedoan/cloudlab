@@ -1,0 +1,39 @@
+defaultPodOptions:
+  labels:
+    istio.io/dataplane-mode: ambient
+controllers:
+  main:
+    replicas: 2
+    strategy: RollingUpdate
+    containers:
+      main:
+        image:
+          repository: registry.registry.svc.cluster.local/example-service
+          tag: 828c31f942e8913ab2af53a2841c180586c5b7e1
+        env:
+          EXAMPLE_SECRET: vault:secret/data/test/example#MANUALLY_CREATED_EXAMPLE_SECRET
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 8080
+        protocol: HTTP
+ingress:
+  main:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: example.staging.khuedoan.com
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: 8080
+    tls:
+      - hosts:
+          - example.staging.khuedoan.com
+        secretName: example-tls-certificate
