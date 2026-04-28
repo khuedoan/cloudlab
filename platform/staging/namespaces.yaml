@@ -20,11 +20,14 @@ spec:
         apiVersion: v1
         kind: Namespace
         forceRename: cert-manager
+        spec: {}
       dex:
         apiVersion: v1
         kind: Namespace
         forceRename: dex
+        spec: {}
       istio-system:
         apiVersion: v1
         kind: Namespace
         forceRename: istio-system
+        spec: {}
