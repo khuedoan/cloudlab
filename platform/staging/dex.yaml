@@ -1,0 +1,115 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: dex
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/dex
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex
+  namespace: flux-system
+spec:
+  interval: 3m
+  dependsOn:
+    - name: platform-namespaces
+  chart:
+    spec:
+      chart: dex
+      version: 0.23.0
+      sourceRef:
+        kind: HelmRepository
+        name: dex
+  releaseName: dex
+  targetNamespace: dex
+  install:
+    createNamespace: true
+  values:
+    image:
+      repository: registry.registry.svc.cluster.local/vendor/images/dexidp/dex
+      tag: v2.43.1
+    env:
+      ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
+      KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
+      FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
+    config:
+      issuer: https://dex.staging.khuedoan.com
+      storage:
+        type: kubernetes
+        config:
+          inCluster: true
+      oauth2:
+        passwordConnector: local
+        skipApprovalScreen: true
+      enablePasswordDB: true
+      staticPasswords:
+        - username: admin
+          email: admin@cloudlab.khuedoan.com
+          userID: "b34bd9d2-70ed-4ee1-8d22-6e4fc84f8d17"
+          hashFromEnv: ADMIN_PASSWORD_HASH
+        - username: khuedoan
+          email: mail@khuedoan.com
+          userID: "41dd7db5-4cb3-4856-a7f1-0d5168a10a12"
+          hashFromEnv: KHUEDOAN_PASSWORD_HASH
+      staticClients:
+        - id: forgejo
+          name: Forgejo
+          redirectURIs:
+            - "https://code.staging.khuedoan.com/user/oauth2/SSO/callback"
+          secretEnv: FORGEJO_CLIENT_SECRET
+    podAnnotations:
+      istio.io/dataplane-mode: ambient
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex-config
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: istio-gateway
+  releaseName: dex-config
+  targetNamespace: dex
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      dex-route:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        forceRename: dex
+        spec:
+          spec:
+            parentRefs:
+              - name: gateway
+                namespace: istio-system
+            hostnames:
+              - dex.staging.khuedoan.com
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: dex
+                    port: 5556

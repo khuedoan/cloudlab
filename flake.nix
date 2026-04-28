@@ -23,6 +23,7 @@
               age
               ansible
               ansible-lint
+              apacheHttpd
               fluxcd
               fzf
               gnumake

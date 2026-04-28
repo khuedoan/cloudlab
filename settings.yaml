@@ -21,6 +21,17 @@ secrets:
       type: random
     secret:
       type: random
+  secret/dex/auth:
+    ADMIN_PASSWORD_HASH:
+      type: manual
+      description: |
+        Enter Dex admin password hash.
+        (Generate with: echo mypassword | htpasswd -BinC 10 "" | cut -d: -f2)
+    KHUEDOAN_PASSWORD_HASH:
+      type: manual
+      description: |
+        Enter Dex khuedoan password hash.
+        (Generate with: echo mypassword | htpasswd -BinC 10 "" | cut -d: -f2)
 vendors:
   vendor/charts/dex:
     kind: chart
