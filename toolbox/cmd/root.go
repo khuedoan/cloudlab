@@ -27,6 +27,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&sshKnownHosts, "ssh-known-hosts", defaultKnownHostsFile(), "Path to SSH known_hosts file")
 
 	rootCmd.AddCommand(gitopsCmd)
+	rootCmd.AddCommand(appsCmd)
 	rootCmd.AddCommand(secretsCmd)
 	rootCmd.AddCommand(vendorCmd)
 }

@@ -32,13 +32,11 @@ secrets:
 		--host kube-1
 
 apps:
-	# TODO multiple env
-	@temporal workflow start \
-		--workflow-id apps-manual \
-		--task-queue cloudlab \
-		--type Apps \
-		--input '{ "url": "/usr/local/src/cloudlab", "revision": "master", "registry": "registry.127.0.0.1.sslip.io", "cluster": "local" }'
-	@temporal workflow result --workflow-id apps-manual
+	toolbox apps \
+		--env ${env} \
+		--path apps \
+		--hosts-file infra/_modules/nixos/hosts.json \
+		--host kube-1
 
 test:
 	cd test && CLOUDLAB_ENV=${env} go test

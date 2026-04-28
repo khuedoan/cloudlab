@@ -77,7 +77,8 @@
   - However, the runtime doesn’t have access to Git - all manifests are pulled from an OCI registry
 - Apps aka SaaS:
   - Strict and standardized
-  - Uses the rendered manifests pattern, essentially `helm template && oras push`
+  - Generated from `apps/$NAMESPACE/$APP/$ENV.yaml`
+  - Published to the cluster as a Flux OCI artifact
 
 ## Estimated cost
 

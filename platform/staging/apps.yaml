@@ -1,0 +1,26 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 30s
+  url: oci://registry.registry.svc.cluster.local:5000/apps
+  insecure: true
+  ref:
+    tag: staging
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 1m
+  dependsOn:
+    - name: platform
+  path: .
+  prune: true
+  sourceRef:
+    kind: OCIRepository
+    name: apps
