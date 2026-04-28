@@ -14,6 +14,10 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30m
+  dependsOn:
+    - name: dex
+    - name: vault
+    - name: vault-secrets-webhook
   chart:
     spec:
       chart: forgejo
@@ -70,7 +74,9 @@ spec:
       oauth:
         - name: SSO
           provider: "openidConnect"
-          autoDiscoverUrl: https://dex.staging.khuedoan.com/.well-known/openid-configuration
+          # Use the in-cluster Dex service for bootstrap because the single-node
+          # staging cluster cannot reliably hairpin through the public gateway.
+          autoDiscoverUrl: http://dex.dex.svc.cluster.local:5556/.well-known/openid-configuration
           key: forgejo
           # Can't use Vault syntax directly here, because it will be templated
           # into a secret, so we need to define a separate environment variable

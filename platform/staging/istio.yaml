@@ -14,6 +14,8 @@ metadata:
   namespace: flux-system
 spec:
   interval: 3m
+  dependsOn:
+    - name: platform-namespaces
   chart:
     spec:
       chart: base
@@ -33,6 +35,8 @@ metadata:
   namespace: flux-system
 spec:
   interval: 3m
+  dependsOn:
+    - name: istio-base
   chart:
     spec:
       chart: cni
@@ -54,6 +58,8 @@ metadata:
   namespace: flux-system
 spec:
   interval: 3m
+  dependsOn:
+    - name: istio-cni
   chart:
     spec:
       chart: ztunnel
@@ -73,6 +79,8 @@ metadata:
   namespace: flux-system
 spec:
   interval: 3m
+  dependsOn:
+    - name: istio-base
   chart:
     spec:
       chart: istiod
@@ -90,23 +98,47 @@ spec:
           cpu: 100m
           memory: 512Mi
 ---
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
 metadata:
-  name: gateway
-  namespace: istio-system # TODO dedicated namespace?
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
+  name: istio-gateway
+  namespace: flux-system
 spec:
-  gatewayClassName: istio
-  listeners:
-  - name: https
-    hostname: "*.staging.khuedoan.com"
-    port: 443
-    protocol: HTTPS
-    tls:
-      certificateRefs:
-        - name: wildcard-tls
-    allowedRoutes:
-      namespaces:
-        from: All
+  interval: 30m
+  dependsOn:
+    - name: cert-manager-config
+    - name: istiod
+  releaseName: istio-gateway
+  targetNamespace: istio-system
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      gateway:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: Gateway
+        forceRename: gateway
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+        spec:
+          spec:
+            gatewayClassName: istio
+            listeners:
+              - name: https
+                # TODO configurable
+                hostname: "*.staging.khuedoan.com"
+                port: 443
+                protocol: HTTPS
+                tls:
+                  certificateRefs:
+                    - name: wildcard-tls
+                allowedRoutes:
+                  namespaces:
+                    from: All
