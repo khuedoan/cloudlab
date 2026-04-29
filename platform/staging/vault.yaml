@@ -47,8 +47,8 @@ spec:
   values:
     env:
       VAULT_ADDR: http://vault.vault.svc.cluster.local:8200
-    # TODO fail fast
-    # podsFailurePolicy: Fail
+    podsFailurePolicy: Fail
+    secretsFailurePolicy: Fail
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
