@@ -47,6 +47,7 @@ spec:
             # the webhook cannot use the K3s image mirror config for registry lookups.
             ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
             KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
+            ACTUALBUDGET_CLIENT_SECRET: vault:secret/data/actualbudget/auth#client_secret
             FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -97,6 +98,11 @@ spec:
           userID: "41dd7db5-4cb3-4856-a7f1-0d5168a10a12"
           hashFromEnv: KHUEDOAN_PASSWORD_HASH
       staticClients:
+        - id: actualbudget
+          name: Actual Budget
+          redirectURIs:
+            - "https://budget.staging.khuedoan.com/openid/callback"
+          secretEnv: ACTUALBUDGET_CLIENT_SECRET
         - id: forgejo
           name: Forgejo
           redirectURIs:

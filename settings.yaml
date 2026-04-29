@@ -21,6 +21,9 @@ secrets:
       type: random
     secret:
       type: random
+  secret/actualbudget/auth:
+    client_secret:
+      type: random
   secret/dex/auth:
     ADMIN_PASSWORD_HASH:
       type: manual
