@@ -24,6 +24,11 @@ spec:
         kind: Namespace
         forceRename: cert-manager
         spec: {}
+      cnpg-system:
+        apiVersion: v1
+        kind: Namespace
+        forceRename: cnpg-system
+        spec: {}
       dex:
         apiVersion: v1
         kind: Namespace

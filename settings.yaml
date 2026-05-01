@@ -36,6 +36,22 @@ secrets:
         Enter Dex khuedoan password hash.
         (Generate with: echo mypassword | htpasswd -BinC 10 "" | cut -d: -f2)
 vendors:
+  vendor/charts/cloudnative-pg:
+    kind: chart
+    repo_url: https://cloudnative-pg.github.io/charts
+    chart: cloudnative-pg
+    versions:
+      - 0.28.0
+  vendor/images/cloudnative-pg/cloudnative-pg:
+    kind: image
+    source: ghcr.io/cloudnative-pg/cloudnative-pg
+    versions:
+      - 1.29.0
+  vendor/images/cloudnative-pg/postgresql:
+    kind: image
+    source: ghcr.io/cloudnative-pg/postgresql
+    versions:
+      - 17.6-system-trixie
   vendor/charts/dex:
     kind: chart
     repo_url: https://charts.dexidp.io
