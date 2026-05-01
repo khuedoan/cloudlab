@@ -39,3 +39,8 @@ spec:
         kind: Namespace
         forceRename: istio-system
         spec: {}
+      temporal:
+        apiVersion: v1
+        kind: Namespace
+        forceRename: temporal
+        spec: {}

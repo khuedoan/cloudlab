@@ -24,6 +24,12 @@ secrets:
   secret/actualbudget/auth:
     client_secret:
       type: random
+  secret/temporal/oauth:
+    client_secret:
+      type: random
+  secret/temporal/postgresql:
+    password:
+      type: random
   secret/dex/auth:
     ADMIN_PASSWORD_HASH:
       type: manual
@@ -58,6 +64,12 @@ vendors:
     chart: dex
     versions:
       - 0.23.0
+  vendor/charts/temporal:
+    kind: chart
+    repo_url: https://go.temporal.io/helm-charts
+    chart: temporal
+    versions:
+      - 0.58.0
   vendor/images/dexidp/dex:
     kind: image
     source: ghcr.io/dexidp/dex

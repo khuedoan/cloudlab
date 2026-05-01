@@ -51,6 +51,7 @@ spec:
             KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
             ACTUALBUDGET_CLIENT_SECRET: vault:secret/data/actualbudget/auth#client_secret
             FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
+            TEMPORAL_CLIENT_SECRET: vault:secret/data/temporal/oauth#client_secret
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -112,6 +113,11 @@ spec:
           redirectURIs:
             - "https://code.staging.khuedoan.com/user/oauth2/SSO/callback"
           secretEnv: FORGEJO_CLIENT_SECRET
+        - id: temporal
+          name: Temporal
+          redirectURIs:
+            - "https://temporal.staging.khuedoan.com/auth/sso/callback"
+          secretEnv: TEMPORAL_CLIENT_SECRET
     podAnnotations:
       istio.io/dataplane-mode: ambient
     resources:

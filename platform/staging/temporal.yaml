@@ -1,0 +1,246 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: temporal
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/temporal
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: temporal-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: temporal-secrets
+  targetNamespace: temporal
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      temporal-db-app:
+        apiVersion: v1
+        kind: Secret
+        forceRename: temporal-db-app
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          type: kubernetes.io/basic-auth
+          stringData:
+            username: temporal
+            password: vault:secret/data/temporal/postgresql#password
+      temporal-web:
+        apiVersion: v1
+        kind: Secret
+        forceRename: temporal-web
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            TEMPORAL_AUTH_CLIENT_SECRET: vault:secret/data/temporal/oauth#client_secret
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: temporal-postgres
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: cnpg
+    - name: temporal-secrets
+  releaseName: temporal-postgres
+  targetNamespace: temporal
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      cluster:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        forceRename: temporal-postgres
+        spec:
+          spec:
+            imageName: >-
+              registry.registry.svc.cluster.local/vendor/images/cloudnative-pg/postgresql:17.6-system-trixie
+            instances: 1
+            bootstrap:
+              initdb:
+                database: temporal
+                owner: temporal
+                secret:
+                  name: temporal-db-app
+            storage:
+              size: 5Gi
+      visibility-database:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Database
+        forceRename: temporal-visibility
+        spec:
+          spec:
+            cluster:
+              name: temporal-postgres
+            name: temporal_visibility
+            owner: temporal
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: temporal
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: dex
+    - name: temporal-secrets
+    - name: temporal-postgres
+  chart:
+    spec:
+      chart: temporal
+      version: 0.58.0
+      sourceRef:
+        kind: HelmRepository
+        name: temporal
+  releaseName: temporal
+  targetNamespace: temporal
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    additionalLabels:
+      istio.io/dataplane-mode: ambient
+    cassandra:
+      enabled: false
+    mysql:
+      enabled: false
+    elasticsearch:
+      enabled: false
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    schema:
+      createDatabase:
+        enabled: false
+    server:
+      replicaCount: 1
+      config:
+        namespaces:
+          create: true
+          namespace:
+            - name: default
+              retention: 3d
+        persistence:
+          defaultStore: default
+          default:
+            driver: sql
+            sql:
+              driver: postgres12
+              host: temporal-postgres-rw
+              port: 5432
+              database: temporal
+              user: temporal
+              existingSecret: temporal-db-app
+          visibility:
+            driver: sql
+            sql:
+              driver: postgres12
+              host: temporal-postgres-rw
+              port: 5432
+              database: temporal_visibility
+              user: temporal
+              existingSecret: temporal-db-app
+    web:
+      additionalEnv:
+        - name: TEMPORAL_DISABLE_WRITE_ACTIONS
+          value: "true"
+        - name: TEMPORAL_AUTH_ENABLED
+          value: "true"
+        - name: TEMPORAL_AUTH_PROVIDER_URL
+          value: "https://dex.staging.khuedoan.com"
+        - name: TEMPORAL_AUTH_ISSUER_URL
+          value: "https://dex.staging.khuedoan.com"
+        - name: TEMPORAL_AUTH_CLIENT_ID
+          value: "temporal"
+        - name: TEMPORAL_AUTH_CALLBACK_URL
+          value: "https://temporal.staging.khuedoan.com/auth/sso/callback"
+        - name: TEMPORAL_AUTH_SCOPES
+          value: "openid,profile,email"
+      additionalEnvSecretName: temporal-web
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: temporal-config
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: istio-gateway
+    - name: temporal
+  releaseName: temporal-config
+  targetNamespace: temporal
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      temporal-route:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        forceRename: temporal
+        spec:
+          spec:
+            parentRefs:
+              - name: gateway
+                namespace: istio-system
+            hostnames:
+              - temporal.staging.khuedoan.com
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: temporal-web
+                    port: 8080
