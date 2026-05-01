@@ -23,6 +23,8 @@ spec:
   targetNamespace: dex
   install:
     createNamespace: true
+    remediation:
+      retries: -1
   chart:
     spec:
       chart: app-template
@@ -71,6 +73,8 @@ spec:
   targetNamespace: dex
   install:
     createNamespace: true
+    remediation:
+      retries: -1
   values:
     image:
       repository: registry.registry.svc.cluster.local/vendor/images/dexidp/dex
@@ -132,6 +136,8 @@ spec:
   targetNamespace: dex
   install:
     createNamespace: true
+    remediation:
+      retries: -1
   chart:
     spec:
       chart: app-template

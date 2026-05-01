@@ -27,6 +27,8 @@ spec:
   targetNamespace: istio-system
   install:
     createNamespace: true
+    remediation:
+      retries: -1
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -46,6 +48,9 @@ spec:
         name: istio
   releaseName: istio-cni
   targetNamespace: istio-system
+  install:
+    remediation:
+      retries: -1
   values:
     global:
       platform: k3s
@@ -69,6 +74,9 @@ spec:
         name: istio
   releaseName: ztunnel
   targetNamespace: istio-system
+  install:
+    remediation:
+      retries: -1
   values:
     profile: ambient
 ---
@@ -90,6 +98,9 @@ spec:
         name: istio
   releaseName: istiod
   targetNamespace: istio-system
+  install:
+    remediation:
+      retries: -1
   values:
     profile: ambient
     pilot:
@@ -112,6 +123,8 @@ spec:
   targetNamespace: istio-system
   install:
     createNamespace: true
+    remediation:
+      retries: -1
   chart:
     spec:
       chart: app-template

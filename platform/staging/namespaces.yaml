@@ -7,6 +7,9 @@ spec:
   interval: 30m
   releaseName: platform-namespaces
   targetNamespace: flux-system
+  install:
+    remediation:
+      retries: -1
   chart:
     spec:
       chart: app-template

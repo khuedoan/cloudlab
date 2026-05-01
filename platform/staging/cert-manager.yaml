@@ -27,6 +27,9 @@ spec:
   targetNamespace: cert-manager
   install:
     createNamespace: true
+    # TODO make this the default?
+    remediation:
+      retries: -1
   values:
     config:
       enableGatewayAPI: true
@@ -51,6 +54,8 @@ spec:
   targetNamespace: cert-manager
   install:
     createNamespace: true
+    remediation:
+      retries: -1
   chart:
     spec:
       chart: app-template
