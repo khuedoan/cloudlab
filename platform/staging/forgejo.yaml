@@ -69,6 +69,7 @@ spec:
   interval: 30m
   dependsOn:
     - name: dex
+    - name: istio-gateway
     - name: vault
     - name: vault-secrets-webhook
     - name: forgejo-secrets
