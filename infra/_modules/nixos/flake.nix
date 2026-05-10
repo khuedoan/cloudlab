@@ -23,7 +23,7 @@
         ];
       };
       kube-1 = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
+        system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
           sops-nix.nixosModules.sops
@@ -48,10 +48,13 @@
               };
               dhcpV4Config.UseDNS = false;
               address = [
-                hosts.kube-1.ipv6_address
+                "${hosts.kube-1.ipv6_address}/64"
               ];
               routes = [
-                { Gateway = "fe80::1"; }
+                {
+                  Gateway = "fe80::1";
+                  GatewayOnLink = true;
+                }
               ];
             };
             services.k3s = {
