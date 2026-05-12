@@ -13,13 +13,16 @@
       # to deploy conflicting manifests.
       manifests = {
         flux = {
-          source = pkgs.runCommand "flux-install-manifest" {
-            nativeBuildInputs = [ pkgs.fluxcd ];
-          } ''
-            flux install \
-              --components=source-controller,kustomize-controller,helm-controller \
-              --export > $out
-          '';
+          source =
+            pkgs.runCommand "flux-install-manifest"
+              {
+                nativeBuildInputs = [ pkgs.fluxcd ];
+              }
+              ''
+                flux install \
+                  --components=source-controller,kustomize-controller,helm-controller \
+                  --export > $out
+              '';
         };
         registry-namespace = {
           content = {
@@ -31,18 +34,21 @@
           };
         };
         registry = {
-          source = pkgs.runCommand "registry-install-manifest" {
-            nativeBuildInputs = [ pkgs.kubernetes-helm ];
-          } ''
-            helm template --skip-tests registry ${
-                pkgs.fetchurl {
-                  url = "https://github.com/project-zot/helm-charts/releases/download/zot-0.1.67/zot-0.1.67.tgz";
-                  sha256 = "118js6m16fvzxxjznydjp6kip67548s6l47zvp0fjjsz9fzz438r";
-                }
-              } \
-              --namespace registry \
-              --values ${./values/registry.yaml} > $out
-          '';
+          source =
+            pkgs.runCommand "registry-install-manifest"
+              {
+                nativeBuildInputs = [ pkgs.kubernetes-helm ];
+              }
+              ''
+                helm template --skip-tests registry ${
+                  pkgs.fetchurl {
+                    url = "https://github.com/project-zot/helm-charts/releases/download/zot-0.1.67/zot-0.1.67.tgz";
+                    sha256 = "118js6m16fvzxxjznydjp6kip67548s6l47zvp0fjjsz9fzz438r";
+                  }
+                } \
+                  --namespace registry \
+                  --values ${./values/registry.yaml} > $out
+              '';
         };
         gateway-api = {
           source = pkgs.fetchurl {

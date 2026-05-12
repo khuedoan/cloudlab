@@ -7,8 +7,8 @@
       allowedTCPPorts = [
         10250 # Kubelet metrics
         # TODO probably unify with the agent config?
-        80    # HTTP
-        443   # HTTPS
+        80 # HTTP
+        443 # HTTPS
       ];
       allowedUDPPorts = [
         51820 # Flannel Wireguard with IPv4

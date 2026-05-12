@@ -5,15 +5,18 @@
     firewall = {
       # https://docs.k3s.io/installation/requirements#inbound-rules-for-k3s-nodes
       allowedTCPPorts = [
-        6443  # K3s supervisor and Kubernetes API Server
+        6443 # K3s supervisor and Kubernetes API Server
         10250 # Kubelet metrics
         # TODO probably unify with the agent config?
-        80    # HTTP
-        443   # HTTPS
+        80 # HTTP
+        443 # HTTPS
       ];
       allowedTCPPortRanges = [
         # Required only for HA with embedded etcd
-        { from = 2379; to = 2380; }
+        {
+          from = 2379;
+          to = 2380;
+        }
       ];
       allowedUDPPorts = [
         51820 # Flannel Wireguard with IPv4

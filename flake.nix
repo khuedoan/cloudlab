@@ -31,7 +31,7 @@
               k3d
               kubectl
               kubernetes-helm
-              nixfmt-rfc-style
+              nixfmt-tree
               nixos-anywhere
               openssh
               opentofu
