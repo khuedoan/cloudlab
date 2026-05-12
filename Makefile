@@ -17,26 +17,26 @@ vendor:
 	toolbox vendor \
 		--settings settings.yaml \
 		--hosts-file infra/_modules/nixos/hosts.json \
-		--host kube-1
+		--host hetzner-metal-1
 
 platform:
 	toolbox gitops \
 		--path platform/${env} \
 		--hosts-file infra/_modules/nixos/hosts.json \
-		--host kube-1
+		--host hetzner-metal-1
 
 secrets:
 	toolbox secrets \
 		--settings settings.yaml \
 		--hosts-file infra/_modules/nixos/hosts.json \
-		--host kube-1
+		--host hetzner-metal-1
 
 apps:
 	toolbox apps \
 		--env ${env} \
 		--path apps \
 		--hosts-file infra/_modules/nixos/hosts.json \
-		--host kube-1
+		--host hetzner-metal-1
 
 test:
 	cd test && CLOUDLAB_ENV=${env} go test

@@ -42,7 +42,17 @@
               ./profiles/k3s-server.nix
               ./profiles/k3s-addons.nix
               {
-                networking.hostName = "hetzner-metal-1";
+                networking = {
+                  hostName = "hetzner-metal-1";
+                  hosts = {
+                    # ffs it's 2026 and GitHub still doesn't have IPv6
+                    # Workaround by using the IPv6 proxy thanks to https://danwin1210.de/github-ipv6-proxy.php
+                    # TODO make everything air gapped so I don't have to do this anymore
+                    "2a01:4f8:c010:d56::6" = [
+                      "ghcr.io"
+                    ];
+                  };
+                };
                 hardware = {
                   enableRedistributableFirmware = true;
                   cpu.amd.updateMicrocode = true;
