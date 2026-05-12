@@ -1,1 +1,1 @@
-{"kube-1":{"instance_id":"130080827","ipv6_address":"2a01:4f8:1c18:f8d4::1"}}
+{"hetzner-metal-1":{"disk":"/dev/disk/by-id/ata-WDC_WD2000FYYZ-01UL1B1_WD-WCC1P0935477","ipv6_address":"2a01:4f9:3a:20ef::2","network_interface":"enp35s0"}}

@@ -1,9 +1,11 @@
+{ hostConfig, ... }:
+
 {
   disko.devices = {
     disk = {
       main = {
         type = "disk";
-        device = "/dev/sda";
+        device = hostConfig.disk;
         content = {
           type = "gpt";
           partitions = {

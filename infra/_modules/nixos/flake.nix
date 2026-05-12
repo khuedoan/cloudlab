@@ -29,8 +29,11 @@
               ./profiles/installer.nix
             ];
           };
-          kube-1 = nixpkgs.lib.nixosSystem {
+          hetzner-metal-1 = nixpkgs.lib.nixosSystem {
             system = "x86_64-linux";
+            specialArgs = {
+              hostConfig = hosts.hetzner-metal-1;
+            };
             modules = [
               disko.nixosModules.disko
               sops-nix.nixosModules.sops
@@ -39,23 +42,22 @@
               ./profiles/k3s-server.nix
               ./profiles/k3s-addons.nix
               {
-                networking.hostName = "kube-1";
+                networking.hostName = "hetzner-metal-1";
+                hardware = {
+                  enableRedistributableFirmware = true;
+                  cpu.amd.updateMicrocode = true;
+                };
                 systemd.network.networks."30-wan" = {
-                  matchConfig.Name = "enp1s0";
+                  matchConfig.Name = hosts.hetzner-metal-1.network_interface;
                   networkConfig = {
-                    DHCP = "ipv4";
-                    # TODO debug this
-                    # CoreDNS runs on the IPv6-only pod network, so it cannot reach
-                    # the IPv4 DNS servers advertised by Hetzner DHCP.
                     DNS = [
-                      # https://developers.cloudflare.com/1.1.1.1/ip-addresses
+                      # https://developers.cloudflare.com/1.1.1.1/ip-addresses/#block-malware
                       "2606:4700:4700::1112"
                       "2606:4700:4700::1002"
                     ];
                   };
-                  dhcpV4Config.UseDNS = false;
                   address = [
-                    "${hosts.kube-1.ipv6_address}/64"
+                    "${hosts.hetzner-metal-1.ipv6_address}/64"
                   ];
                   routes = [
                     {
@@ -67,7 +69,7 @@
                 services.k3s = {
                   clusterInit = true;
                   extraFlags = nixpkgs.lib.mkAfter [
-                    "--node-external-ip=${hosts.kube-1.ipv6_address}"
+                    "--node-external-ip=${hosts.hetzner-metal-1.ipv6_address}"
                   ];
                 };
               }

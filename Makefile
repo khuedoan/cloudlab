@@ -42,7 +42,7 @@ test:
 	cd test && CLOUDLAB_ENV=${env} go test
 
 fmt:
-	nixfmt flake.nix
+	treefmt
 	yamlfmt \
 		--exclude infra/_modules/cluster/roles/secrets/vars/main.yml \
 		--exclude infra/*/secrets.yaml \

@@ -18,6 +18,8 @@ module "nixos" {
   target_host            = each.value.ipv6_address
   instance_id            = each.key
   build_on_remote        = true
+  install_ssh_key        = file(var.install_ssh_key_file)
+  deployment_ssh_key     = file(var.deployment_ssh_key_file)
   extra_files_script     = "${path.module}/decrypt-age-keys.sh"
   extra_environment = {
     SOPS_FILE = var.sops_file
@@ -33,7 +35,7 @@ data "external" "kubeconfig" {
 
   query = {
     user = "root"
-    host = var.hosts["kube-1"].ipv6_address # TODO better way to get this
+    host = var.hosts["hetzner-metal-1"].ipv6_address # TODO better way to get this
   }
 
   depends_on = [
