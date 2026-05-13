@@ -21,6 +21,12 @@ secrets:
       type: random
     secret:
       type: random
+  secret/grafana/oauth:
+    client_secret:
+      type: random
+  secret/kiali/oauth:
+    client_secret:
+      type: random
   secret/actualbudget/auth:
     client_secret:
       type: random
@@ -70,6 +76,30 @@ vendors:
     chart: temporal
     versions:
       - 0.58.0
+  vendor/charts/grafana:
+    kind: chart
+    repo_url: https://grafana.github.io/helm-charts
+    chart: grafana
+    versions:
+      - 8.15.0
+  vendor/charts/loki-stack:
+    kind: chart
+    repo_url: https://grafana.github.io/helm-charts
+    chart: loki-stack
+    versions:
+      - 2.10.2
+  vendor/charts/kube-prometheus-stack:
+    kind: chart
+    repo_url: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    versions:
+      - 75.15.1
+  vendor/charts/kiali-server:
+    kind: chart
+    repo_url: https://kiali.org/helm-charts
+    chart: kiali-server
+    versions:
+      - 2.7.1
   vendor/images/dexidp/dex:
     kind: image
     source: ghcr.io/dexidp/dex
