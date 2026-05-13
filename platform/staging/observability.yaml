@@ -112,3 +112,132 @@ spec:
     serviceMonitor:
       enabled: true
 ---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: grafana-secrets
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      grafana-secrets:
+        apiVersion: v1
+        kind: Secret
+        forceRename: grafana-secrets
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            SSO_CLIENT_SECRET: vault:secret/data/grafana/oauth#client_secret
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: dex
+    - name: grafana-secrets
+    - name: prometheus
+  chart:
+    spec:
+      chart: grafana
+      version: 8.15.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+  releaseName: grafana
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    testFramework:
+      enabled: false
+    sidecar:
+      dashboards:
+        enabled: true
+      datasources:
+        enabled: true
+    envFromSecret: grafana-secrets
+    grafana.ini:
+      server:
+        root_url: https://grafana.staging.khuedoan.com
+      auth.generic_oauth:
+        enabled: true
+        allow_sign_up: true
+        name: SSO
+        client_id: grafana
+        client_secret: $__env{SSO_CLIENT_SECRET}
+        scopes: openid profile email groups
+        auth_url: https://dex.staging.khuedoan.com/auth
+        token_url: https://dex.staging.khuedoan.com/token
+        api_url: https://dex.staging.khuedoan.com/userinfo
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-config
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: grafana
+    - name: istio-gateway
+  releaseName: grafana-config
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      grafana-route:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        forceRename: grafana
+        spec:
+          spec:
+            parentRefs:
+              - name: gateway
+                namespace: istio-system
+            hostnames:
+              - grafana.staging.khuedoan.com
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: grafana
+                    port: 80
