@@ -1,0 +1,39 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/grafana
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: loki-stack
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/loki-stack
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/kube-prometheus-stack
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kiali
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/kiali-server
