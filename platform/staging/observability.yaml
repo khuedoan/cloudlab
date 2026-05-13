@@ -37,3 +37,78 @@ spec:
   type: oci
   interval: 1h
   url: oci://registry.registry.svc.cluster.local:5000/vendor/charts/kiali-server
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 75.15.1
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+  releaseName: prometheus
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  values:
+    grafana:
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+      enabled: false
+      forceDeployDashboards: true
+      forceDeployDatasources: true
+    prometheus:
+      prometheusSpec:
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+    prometheusOperator:
+      admissionWebhooks:
+        enabled: false
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: prometheus
+  chart:
+    spec:
+      chart: loki-stack
+      version: 2.10.2
+      sourceRef:
+        kind: HelmRepository
+        name: loki-stack
+  releaseName: loki
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    loki:
+      isDefault: false
+    serviceMonitor:
+      enabled: true
+---
