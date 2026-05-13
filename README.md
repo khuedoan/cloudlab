@@ -82,19 +82,19 @@
 
 ## Estimated cost
 
-| Provider     | Service                                                     | Usage | Pricing     |
-| :--          | :--                                                         | :--   | :--         |
-| Metal        | Hardware depreciation                                       |       | 76.32$/year |
-| Metal        | Electricity                                                 |       | 36$/year    |
-| Oracle Cloud | Virtual Cloud Network                                       | 1     | Free        |
-| Oracle Cloud | `VM.Standard.A1.Flex` (ARM) - 4 cores, 24GB RAM, 200GB disk | 1     | Free        |
-| Hetzner      | VM `CAX21` - 4 cores, 8GB RAM, 80GB disk                    | 1     | 83.88$/year |
-| Cloudflare   | R2 Bucket (Terraform state)                                 | 2     | Free        |
-| Cloudflare   | Domain                                                      | 2     | 20$/year    |
-| Cloudflare   | Load Balancer                                               | 1     | 60$/year    |
-| Cloudflare   | Tunnel                                                      | 2     | Free        |
-| Backblaze    | B2 Bucket (backup)                                          | 1TB   | 72$/year    |
-| **Total**    |                                                             |       | 348.2$/year |
+| Provider     | Service                                                     | Usage | Pricing      |
+| :--          | :--                                                         | :--   | :--          |
+| Metal        | Hardware depreciation                                       |       | 76.32$/year  |
+| Metal        | Electricity                                                 |       | 36$/year     |
+| Oracle Cloud | Virtual Cloud Network                                       | 1     | Free         |
+| Oracle Cloud | `VM.Standard.A1.Flex` (ARM) - 4 cores, 24GB RAM, 200GB disk | 1     | Free         |
+| Hetzner      | Dedicated server auction - Ryzen 5 3600, 64GB RAM, 4TB HDD  | 1     | 468$/year    |
+| Cloudflare   | R2 Bucket (Terraform state)                                 | 2     | Free         |
+| Cloudflare   | Domain                                                      | 2     | 20$/year     |
+| Cloudflare   | Load Balancer                                               | 1     | 60$/year     |
+| Cloudflare   | Tunnel                                                      | 2     | Free         |
+| Backblaze    | B2 Bucket (backup)                                          | 1TB   | 72$/year     |
+| **Total**    |                                                             |       | 732.32$/year |
 
 ## Get started
 
