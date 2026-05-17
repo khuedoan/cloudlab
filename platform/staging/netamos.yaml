@@ -1,0 +1,208 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo-bots
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: forgejo
+    - name: vault-secrets-webhook
+  releaseName: forgejo-bots
+  targetNamespace: forgejo
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      forgejo-bots:
+        apiVersion: batch/v1
+        kind: CronJob
+        forceRename: forgejo-bots
+        spec:
+          spec:
+            schedule: "*/30 * * * *"
+            concurrencyPolicy: Forbid
+            successfulJobsHistoryLimit: 1
+            failedJobsHistoryLimit: 3
+            jobTemplate:
+              spec:
+                backoffLimit: 6
+                template:
+                  metadata:
+                    annotations:
+                      vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+                      vault.security.banzaicloud.io/vault-role: default
+                      vault.security.banzaicloud.io/vault-path: kubernetes
+                  spec:
+                    restartPolicy: OnFailure
+                    containers:
+                      - name: bootstrap
+                        image: docker.io/curlimages/curl:8.16.0
+                        env:
+                          - name: FORGEJO_URL
+                            value: http://forgejo-http.forgejo.svc.cluster.local:3000
+                          - name: FORGEJO_ADMIN_PASSWORD
+                            value: vault:secret/data/forgejo/admin#password
+                          - name: NETAMOS_PASSWORD
+                            value: vault:secret/data/netamos/forgejo#password
+                          - name: NETAMOS_WEBHOOK_URL
+                            value: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
+                          - name: NETAMOS_WEBHOOK_LEGACY_URL
+                            value: http://netamos.netamos.svc.cluster.local:8080
+                        command:
+                          - sh
+                          - -ceu
+                          - |
+                            until curl -fsS "${FORGEJO_URL}/api/healthz"; do
+                              sleep 5
+                            done
+
+                            curl -fsS \
+                              -u "forgejo_admin:${FORGEJO_ADMIN_PASSWORD}" \
+                              -H "Content-Type: application/json" \
+                              -X POST "${FORGEJO_URL}/api/v1/admin/users" \
+                              -d '{
+                                "email": "bot@cloudlab.khuedoan.com",
+                                "username": "Bot",
+                                "password": "'"${NETAMOS_PASSWORD}"'",
+                                "must_change_password": false,
+                                "restricted": false
+                              }' || true
+
+                            for repo in khuedoan/blog; do
+                              hooks="$(curl -fsS -u "forgejo_admin:${FORGEJO_ADMIN_PASSWORD}" "${FORGEJO_URL}/api/v1/repos/${repo}/hooks")"
+                              compact_hooks="$(printf '%s' "${hooks}" | tr -d '[:space:]')"
+                              stale_hook_ids="$(printf '%s' "${compact_hooks}" | sed 's/},{/}\n{/g' | grep -F "\"url\":\"${NETAMOS_WEBHOOK_LEGACY_URL}\"" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p')"
+                              for hook_id in ${stale_hook_ids}; do
+                                curl -fsS \
+                                  -u "forgejo_admin:${FORGEJO_ADMIN_PASSWORD}" \
+                                  -X DELETE "${FORGEJO_URL}/api/v1/repos/${repo}/hooks/${hook_id}"
+                              done
+
+                              if ! printf '%s' "${compact_hooks}" | grep -Fq "\"url\":\"${NETAMOS_WEBHOOK_URL}\""; then
+                                curl -fsS \
+                                  -u "forgejo_admin:${FORGEJO_ADMIN_PASSWORD}" \
+                                  -H "Content-Type: application/json" \
+                                  -X POST "${FORGEJO_URL}/api/v1/repos/${repo}/hooks" \
+                                  -d '{
+                                    "type": "gitea",
+                                    "config": {
+                                      "url": "'"${NETAMOS_WEBHOOK_URL}"'",
+                                      "content_type": "json"
+                                    },
+                                    "events": ["push"],
+                                    "active": true
+                                  }'
+                              fi
+                            done
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: netamos
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: temporal
+    - name: forgejo
+    - name: forgejo-bots
+  releaseName: netamos
+  targetNamespace: netamos
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    defaultPodOptions:
+      restartPolicy: Always
+    controllers:
+      server:
+        labels:
+          istio.io/dataplane-mode: ambient
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              # TODO switch to netamos
+              repository: docker.io/khuedoan/platform-engine
+              tag: cc293da27a86c6b2e34f597b4e7661edf4403be0
+              pullPolicy: Always
+            command:
+              - /usr/local/bin/server
+            env:
+              TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
+              GITOPS_REVISION: master
+              REGISTRY: registry.registry.svc.cluster.local:80
+      worker:
+        labels:
+          istio.io/dataplane-mode: ambient
+        strategy: RollingUpdate
+        pod:
+          hostNetwork: true # TODO ???
+        containers:
+          app:
+            image:
+              # TODO switch to netamos
+              repository: docker.io/khuedoan/platform-engine
+              tag: cc293da27a86c6b2e34f597b4e7661edf4403be0
+              pullPolicy: Always
+            env:
+              TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              REGISTRY: registry.registry.svc.cluster.local
+              GIT_USER: Bot
+              GIT_EMAIL: bot@cloudlab.khuedoan.com
+              GIT_USERNAME: Bot
+              GIT_PASSWORD: vault:secret/data/netamos/forgejo#password
+          docker:
+            image:
+              repository: docker.io/library/docker
+              tag: 27-dind
+            command:
+              - dockerd
+              - --host=unix:///var/run/docker.sock
+              - --insecure-registry=registry.registry.svc.cluster.local
+            securityContext:
+              privileged: true
+    service:
+      server:
+        controller: server
+        ports:
+          http:
+            port: 8080
+            protocol: HTTP
+    persistence:
+      socket:
+        type: emptyDir
+        advancedMounts:
+          worker:
+            app:
+              - path: /var/run
+                subPath: docker.sock
+            docker:
+              - path: /var/run
+                subPath: docker.sock

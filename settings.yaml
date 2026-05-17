@@ -21,6 +21,9 @@ secrets:
       type: random
     secret:
       type: random
+  secret/netamos/forgejo:
+    password:
+      type: random
   secret/grafana/oauth:
     client_secret:
       type: random
