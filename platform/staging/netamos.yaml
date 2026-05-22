@@ -47,7 +47,7 @@ spec:
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
               APP_CLUSTER: staging
-              REGISTRY: registry.registry.svc.cluster.local:5000
+              REGISTRY: registry.registry.svc.cluster.local
       bootstrap:
         labels:
           istio.io/dataplane-mode: ambient
@@ -119,7 +119,7 @@ spec:
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
-              REGISTRY: registry.registry.svc.cluster.local:5000
+              REGISTRY: registry.registry.svc.cluster.local
               DOCKER_BUILD_NETWORK: host
               DOCKER_BUILD_ADD_HOSTS: github.com:2a01:4f8:c010:d56::2,codeload.github.com:2a01:4f8:c010:d56::4
               GIT_USER: Bot
@@ -133,7 +133,7 @@ spec:
             command:
               - dockerd
               - --host=unix:///var/run/docker.sock
-              - --insecure-registry=registry.registry.svc.cluster.local:5000
+              - --insecure-registry=registry.registry.svc.cluster.local
             securityContext:
               privileged: true
     service:

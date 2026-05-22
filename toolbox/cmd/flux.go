@@ -15,7 +15,7 @@ import (
 const (
 	registryNamespace = "registry"
 	registryService   = "svc/registry"
-	registryPort      = 5000
+	registryPort      = 80
 	fluxNamespace     = "flux-system"
 )
 

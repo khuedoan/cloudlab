@@ -67,7 +67,7 @@
               };
               spec = {
                 interval = "30s";
-                url = "oci://registry.registry.svc.cluster.local:5000/platform";
+                url = "oci://registry.registry.svc.cluster.local/platform";
                 insecure = true;
                 ref = {
                   tag = "latest";

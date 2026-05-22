@@ -5,6 +5,7 @@ podLabels:
   istio.io/dataplane-mode: ambient
 service:
   type: ClusterIP
+  port: 80
   clusterIP: fd6a:7c7b:3e12:100::f # TODO don't hard code?
 persistence: true
 pvc:

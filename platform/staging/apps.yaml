@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30s
-  url: oci://registry.registry.svc.cluster.local:5000/apps
+  url: oci://registry.registry.svc.cluster.local/apps
   insecure: true
   ref:
     tag: staging
