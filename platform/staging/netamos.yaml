@@ -38,7 +38,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: docker.io/khuedoan/platform-engine
-              tag: cc293da27a86c6b2e34f597b4e7661edf4403be0
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
               pullPolicy: Always
             command:
               - /usr/local/bin/server
@@ -69,7 +69,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: docker.io/khuedoan/platform-engine
-              tag: cc293da27a86c6b2e34f597b4e7661edf4403be0
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -77,7 +77,7 @@ spec:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
               TASK_QUEUE: bootstrap
               FORGEJO_BOOTSTRAP: "true"
-              FORGEJO_BOOTSTRAP_INTERVAL_SECONDS: "1800"
+              FORGEJO_BOOTSTRAP_INTERVAL_SECONDS: "86400"
               FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
               FORGEJO_ADMIN_USERNAME: forgejo_admin
               FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
@@ -115,7 +115,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: docker.io/khuedoan/platform-engine
-              tag: cc293da27a86c6b2e34f597b4e7661edf4403be0
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
