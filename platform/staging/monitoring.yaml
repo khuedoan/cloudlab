@@ -190,9 +190,13 @@ spec:
     grafana.ini:
       server:
         root_url: https://grafana.staging.khuedoan.com
+      auth:
+        disable_login_form: true
       auth.generic_oauth:
         enabled: true
         allow_sign_up: true
+        role_attribute_strict: true
+        role_attribute_path: "email && 'Admin'"
         name: SSO
         client_id: grafana
         client_secret: $__env{SSO_CLIENT_SECRET}
