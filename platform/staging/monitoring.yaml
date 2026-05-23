@@ -5,6 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   type: oci
+  insecure: true
   interval: 1h
   url: oci://registry.registry.svc.cluster.local/vendor/charts/grafana
 ---
@@ -15,6 +16,7 @@ metadata:
   namespace: flux-system
 spec:
   type: oci
+  insecure: true
   interval: 1h
   url: oci://registry.registry.svc.cluster.local/vendor/charts/loki-stack
 ---
@@ -25,6 +27,7 @@ metadata:
   namespace: flux-system
 spec:
   type: oci
+  insecure: true
   interval: 1h
   url: oci://registry.registry.svc.cluster.local/vendor/charts/kube-prometheus-stack
 ---
@@ -35,6 +38,7 @@ metadata:
   namespace: flux-system
 spec:
   type: oci
+  insecure: true
   interval: 1h
   url: oci://registry.registry.svc.cluster.local/vendor/charts/kiali-server
 ---
@@ -50,7 +54,7 @@ spec:
   chart:
     spec:
       chart: kube-prometheus-stack
-      version: 75.15.1
+      version: 85.3.0
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
@@ -96,7 +100,7 @@ spec:
   chart:
     spec:
       chart: loki-stack
-      version: 2.10.2
+      version: 2.10.3
       sourceRef:
         kind: HelmRepository
         name: loki-stack
@@ -164,7 +168,7 @@ spec:
   chart:
     spec:
       chart: grafana
-      version: 8.15.0
+      version: 12.4.0
       sourceRef:
         kind: HelmRepository
         name: grafana
@@ -295,7 +299,7 @@ spec:
   chart:
     spec:
       chart: kiali-server
-      version: 2.7.1
+      version: 2.26.0
       sourceRef:
         kind: HelmRepository
         name: kiali
