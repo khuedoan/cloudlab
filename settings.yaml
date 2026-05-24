@@ -85,12 +85,18 @@ vendors:
     chart: grafana
     versions:
       - 12.4.0
-  vendor/charts/loki-stack:
+  vendor/charts/loki:
     kind: chart
-    repo_url: https://grafana.github.io/helm-charts
-    chart: loki-stack
+    repo_url: https://grafana-community.github.io/helm-charts
+    chart: loki
     versions:
-      - 2.10.3
+      - 17.0.1
+  vendor/charts/vector:
+    kind: chart
+    repo_url: https://helm.vector.dev
+    chart: vector
+    versions:
+      - 0.52.0
   vendor/charts/kube-prometheus-stack:
     kind: chart
     repo_url: https://prometheus-community.github.io/helm-charts

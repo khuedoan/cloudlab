@@ -12,13 +12,24 @@ spec:
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
-  name: loki-stack
+  name: loki
   namespace: flux-system
 spec:
   type: oci
   insecure: true
   interval: 1h
-  url: oci://registry.registry.svc.cluster.local/vendor/charts/loki-stack
+  url: oci://registry.registry.svc.cluster.local/vendor/charts/loki
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: vector
+  namespace: flux-system
+spec:
+  type: oci
+  insecure: true
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local/vendor/charts/vector
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
@@ -99,11 +110,11 @@ spec:
     - name: prometheus
   chart:
     spec:
-      chart: loki-stack
-      version: 2.10.3
+      chart: loki
+      version: 17.0.1
       sourceRef:
         kind: HelmRepository
-        name: loki-stack
+        name: loki
   releaseName: loki
   targetNamespace: monitoring
   install:
@@ -112,9 +123,118 @@ spec:
       retries: -1
   values:
     loki:
-      isDefault: false
-    serviceMonitor:
-      enabled: true
+      auth_enabled: false
+      commonConfig:
+        instance_addr: ${POD_IP}
+        replication_factor: 1
+        ring:
+          kvstore:
+            store: memberlist
+      schemaConfig:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+      storage:
+        type: filesystem
+      limits_config:
+        allow_structured_metadata: true
+        volume_enabled: true
+      query_scheduler:
+        scheduler_ring:
+          instance_addr: ${POD_IP}
+          kvstore:
+            store: memberlist
+    singleBinary:
+      replicas: 1
+      sidecar: false
+      persistence:
+        enabled: true
+        size: 10Gi
+    backend:
+      replicas: 0
+    read:
+      replicas: 0
+    write:
+      replicas: 0
+    chunksCache:
+      enabled: false
+    resultsCache:
+      enabled: false
+    lokiCanary:
+      enabled: false
+    test:
+      enabled: false
+    gateway:
+      enabled: false
+    monitoring:
+      serviceMonitor:
+        enabled: true
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vector
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: loki
+    - name: prometheus
+  chart:
+    spec:
+      chart: vector
+      version: 0.52.0
+      sourceRef:
+        kind: HelmRepository
+        name: vector
+  releaseName: vector
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    role: Agent
+    livenessProbe:
+      grpc:
+        port: 8686
+    readinessProbe:
+      grpc:
+        port: 8686
+    env:
+      - name: KUBERNETES_SERVICE_HOST
+        value: kubernetes.default.svc
+      - name: KUBERNETES_SERVICE_PORT
+        value: "443"
+    customConfig:
+      data_dir: /vector-data-dir
+      api:
+        enabled: true
+        address: "[::]:8686"
+      sources:
+        kubernetes_logs:
+          type: kubernetes_logs
+      sinks:
+        loki:
+          type: loki
+          inputs:
+            - kubernetes_logs
+          endpoint: http://loki:3100
+          path: /loki/api/v1/push
+          encoding:
+            codec: raw_message
+          labels:
+            cluster: staging
+            namespace: '{{ "{{ kubernetes.pod_namespace }}" }}'
+            pod: '{{ "{{ kubernetes.pod_name }}" }}'
+            container: '{{ "{{ kubernetes.container_name }}" }}'
+            node: '{{ "{{ kubernetes.pod_node_name }}" }}'
+            stream: '{{ "{{ stream }}" }}'
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -196,7 +316,7 @@ spec:
         enabled: true
         allow_sign_up: true
         role_attribute_strict: true
-        role_attribute_path: "email && 'Admin'"
+        role_attribute_path: "email == 'admin@cloudlab.khuedoan.com' && 'Admin' || 'Editor'"
         name: SSO
         client_id: grafana
         client_secret: $__env{SSO_CLIENT_SECRET}
