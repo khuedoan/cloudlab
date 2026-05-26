@@ -42,3 +42,9 @@ data "external" "kubeconfig" {
     module.nixos
   ]
 }
+
+resource "local_sensitive_file" "kubeconfig" {
+  content         = data.external.kubeconfig.result.kubeconfig
+  filename        = "./kubeconfig.yaml"
+  file_permission = "600"
+}
