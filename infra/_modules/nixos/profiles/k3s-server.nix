@@ -32,6 +32,7 @@
       tokenFile = config.sops.secrets.k3s_token.path;
       extraFlags = [
         "--disable-helm-controller"
+        "--disable=local-storage"
         "--disable-network-policy"
         "--disable=traefik"
         "--cluster-cidr=fd6a:7c7b:3e12:0::/56" # TODO proper ULA planning

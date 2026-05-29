@@ -41,6 +41,7 @@
               ./disks.nix
               ./profiles/k3s-server.nix
               ./profiles/k3s-addons.nix
+              ./profiles/rook-ceph.nix
               {
                 networking = {
                   hostName = "hetzner-metal-1";

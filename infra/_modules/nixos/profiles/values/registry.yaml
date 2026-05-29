@@ -10,4 +10,5 @@ service:
 persistence: true
 pvc:
   create: true
+  storageClassName: standard
   storage: 10Gi
