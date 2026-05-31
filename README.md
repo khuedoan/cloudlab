@@ -167,6 +167,14 @@ proxmox_username: foo
 proxmox_password: foo
 ```
 
+Connect to a cluster:
+
+
+```
+export KUBECONFIG="$(terragrunt output --working-dir infra/staging/nixos -raw kubeconfig_path)"
+kubectl cluster-info
+```
+
 ### Operations
 
 - [Rebuild environment](docs/how-to-guides/rebuild-environment.md)
