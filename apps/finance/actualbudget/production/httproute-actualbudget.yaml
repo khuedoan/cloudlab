@@ -2,7 +2,6 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: actualbudget
-  namespace: finance-actualbudget-production
 spec:
   hostnames:
   - budget.production.khuedoan.com

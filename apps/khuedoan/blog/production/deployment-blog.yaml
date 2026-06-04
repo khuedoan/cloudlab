@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: blog
-  namespace: khuedoan-blog-production
 spec:
   replicas: 2
   selector:

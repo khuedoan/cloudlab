@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: actualbudget
-  namespace: finance-actualbudget-production
 spec:
   selector:
     matchLabels:
