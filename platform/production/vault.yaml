@@ -1,0 +1,202 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bank-vaults
+  namespace: flux-system
+spec:
+  type: oci
+  url: oci://docker.io/khuedoan
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vault-operator
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: vault-operator-helm
+      version: 1.23.0
+      sourceRef:
+        kind: HelmRepository
+        name: bank-vaults
+  releaseName: vault-operator
+  targetNamespace: vault
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vault-secrets-webhook
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: vault-secrets-webhook-helm
+      version: 1.22.2
+      sourceRef:
+        kind: HelmRepository
+        name: bank-vaults
+  releaseName: vault-secrets-webhook
+  targetNamespace: vault
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    env:
+      VAULT_ADDR: http://vault.vault.svc.cluster.local:8200
+    podsFailurePolicy: Fail
+    secretsFailurePolicy: Fail
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vault
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: vault-operator
+  releaseName: vault
+  targetNamespace: vault
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    persistence:
+      data:
+        accessMode: ReadWriteOnce
+        size: 2Gi
+    rawResources:
+      cluster:
+        apiVersion: vault.banzaicloud.com/v1alpha1
+        kind: Vault
+        spec:
+          spec:
+            config:
+              listener:
+                tcp:
+                  address: "[::]:8200" # TODO dual stack?
+                  tls_disable: true
+              storage:
+                file:
+                  path: /vault/data
+              ui: true
+            externalConfig:
+              auth:
+              - roles:
+                - bound_service_account_names:
+                  - '*'
+                  bound_service_account_namespaces:
+                  - '*'
+                  name: default
+                  policies:
+                  - allow_secrets
+                  ttl: 1h
+                config:
+                  # Needs to be explicit, otherwise it will fallback to
+                  # https://$KUBERNETES_SERVICE_HOST & breaks on IPv6-only
+                  # cluster because the address is not bracketed
+                  kubernetes_host: https://kubernetes.default.svc.cluster.local:443
+                type: kubernetes
+              policies:
+              - name: allow_secrets
+                rules: |
+                  # TODO optimize this
+                  path "secret/*" {
+                    capabilities = ["create", "read", "update", "delete", "list"]
+                  }
+              secrets:
+              - options:
+                  version: 2
+                path: secret
+                type: kv
+            image: docker.io/hashicorp/vault:1.20.2
+            serviceAccount: vault
+            size: 1
+            unsealConfig:
+              kubernetes:
+                secretNamespace: '{{ .Release.Namespace }}'
+            volumeMounts:
+            - mountPath: /vault/data
+              name: vault
+            volumes:
+            - name: vault
+              persistentVolumeClaim:
+                claimName: vault
+    route:
+      main:
+        kind: HTTPRoute
+        parentRefs:
+          - group: gateway.networking.k8s.io
+            kind: Gateway
+            name: gateway
+            namespace: istio-system
+        hostnames:
+          - vault.production.khuedoan.com
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - name: vault
+                port: 8200
+    rbac:
+      bindings:
+        cluster:
+          forceRename: vault
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: system:auth-delegator
+          subjects:
+          - kind: ServiceAccount
+            name: vault
+            namespace: '{{ .Release.Namespace }}'
+          type: ClusterRoleBinding
+        namespace:
+          forceRename: vault
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+            name: vault
+          subjects:
+          - kind: ServiceAccount
+            name: vault
+            namespace: '{{ .Release.Namespace }}'
+          type: RoleBinding
+      roles:
+        vault:
+          rules:
+          - apiGroups:
+            - ""
+            resources:
+            - secrets
+            verbs:
+            - '*'
+          - apiGroups:
+            - ""
+            resources:
+            - pods
+            verbs:
+            - get
+            - update
+            - patch
+          type: Role
+    serviceAccount:
+      vault: {}

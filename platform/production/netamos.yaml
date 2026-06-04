@@ -1,95 +1,156 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
 metadata:
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   name: netamos
+  namespace: flux-system
 spec:
-  destination:
-    name: in-cluster
-    namespace: netamos
-  project: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ApplyOutOfSyncOnly=true
-      - ServerSideApply=true
-  source:
-    repoURL: https://bjw-s-labs.github.io/helm-charts
-    chart: app-template
-    targetRevision: 3.7.3
-    helm:
-      valuesObject:
-        defaultPodOptions:
-          restartPolicy: Always
-        controllers:
-          server:
-            labels:
-              istio.io/dataplane-mode: ambient
-            strategy: RollingUpdate
-            containers:
-              app:
-                image:
-                  # TODO switch to netamos
-                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-                  tag: 3a908a8a0acbf914342dd52f3e768e8e99b44a3e
-                  pullPolicy: Always
-                command:
-                  - /usr/local/bin/server
-                env:
-                  TEMPORAL_URL: http://temporal-frontend.temporal:7233
-                  GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
-                  GITOPS_REVISION: master
-                  REGISTRY: registry.registry.svc.cluster.local:80
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: temporal
+    - name: forgejo
+  releaseName: netamos
+  targetNamespace: netamos
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    defaultPodOptions:
+      restartPolicy: Always
+    controllers:
+      server:
+        labels:
+          istio.io/dataplane-mode: ambient
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              # TODO switch to netamos
+              repository: docker.io/khuedoan/platform-engine
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              pullPolicy: Always
+            command:
+              - /usr/local/bin/server
+            env:
+              TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
+              GITOPS_REVISION: master
+              APP_CLUSTER: production
+              REGISTRY: registry.registry.svc.cluster.local
+      bootstrap:
+        labels:
+          istio.io/dataplane-mode: ambient
+        strategy: RollingUpdate
+        pod:
+          annotations:
+            vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+            vault.security.banzaicloud.io/vault-role: default
+            vault.security.banzaicloud.io/vault-path: kubernetes
+          hostAliases:
+            - ip: 2a01:4f8:c010:d56::2
+              hostnames:
+                - github.com
+            - ip: 2a01:4f8:c010:d56::4
+              hostnames:
+                - codeload.github.com
+        containers:
+          app:
+            image:
+              # TODO switch to netamos
+              repository: docker.io/khuedoan/platform-engine
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              pullPolicy: Always
+            command:
+              - /usr/local/bin/worker
+            env:
+              TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              TASK_QUEUE: bootstrap
+              FORGEJO_BOOTSTRAP: "true"
+              FORGEJO_BOOTSTRAP_INTERVAL_SECONDS: "86400"
+              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
+              FORGEJO_ADMIN_USERNAME: forgejo_admin
+              FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
+              NETAMOS_USERNAME: Bot
+              NETAMOS_EMAIL: bot@cloudlab.khuedoan.com
+              NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
+              NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
+              NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog
+              GITOPS_REPO: khuedoan/cloudlab
+              GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
+              GITOPS_REVISION: master
+      worker:
+        labels:
+          istio.io/dataplane-mode: ambient
+        strategy: RollingUpdate
+        pod:
+          hostNetwork: true # TODO ???
+          annotations:
+            vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+            vault.security.banzaicloud.io/vault-role: default
+            vault.security.banzaicloud.io/vault-path: kubernetes
+          hostAliases:
+            - ip: 2a01:4f8:c010:d56::2
+              hostnames:
+                - github.com
+            - ip: 2a01:4f8:c010:d56::4
+              hostnames:
+                - codeload.github.com
+            - ip: 2a01:4f8:c010:d56::6
+              hostnames:
+                - ghcr.io
+        containers:
+          app:
+            image:
+              # TODO switch to netamos
+              repository: docker.io/khuedoan/platform-engine
+              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              pullPolicy: Always
+            env:
+              TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              REGISTRY: registry.registry.svc.cluster.local
+              DOCKER_BUILD_NETWORK: host
+              DOCKER_BUILD_ADD_HOSTS: github.com:2a01:4f8:c010:d56::2,codeload.github.com:2a01:4f8:c010:d56::4
+              GIT_USER: Bot
+              GIT_EMAIL: bot@cloudlab.khuedoan.com
+              GIT_USERNAME: Bot
+              GIT_PASSWORD: vault:secret/data/netamos/forgejo#password
+          docker:
+            image:
+              repository: docker.io/library/docker
+              tag: 27-dind
+            command:
+              - dockerd
+              - --host=unix:///var/run/docker.sock
+              - --insecure-registry=registry.registry.svc.cluster.local
+            securityContext:
+              privileged: true
+    service:
+      server:
+        controller: server
+        ports:
+          http:
+            port: 8080
+            protocol: HTTP
+    persistence:
+      socket:
+        type: emptyDir
+        advancedMounts:
           worker:
-            labels:
-              istio.io/dataplane-mode: ambient
-            strategy: RollingUpdate
-            pod:
-              hostNetwork: true # TODO ???
-            containers:
-              app:
-                image:
-                  # TODO switch to netamos
-                  repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-                  tag: 3a908a8a0acbf914342dd52f3e768e8e99b44a3e
-                  pullPolicy: Always
-                env:
-                  TEMPORAL_URL: http://temporal-frontend.temporal:7233
-                  REGISTRY: registry.registry.svc.cluster.local
-                  GIT_USER: Bot
-                  GIT_EMAIL: bot@cloudlab.khuedoan.com
-                  GIT_USERNAME: khuedoan
-                  # TODO generate this automatically
-                  GIT_PASSWORD: vault:secret/data/demosecret/forgejo#PASSWORD
-              docker:
-                image:
-                  repository: docker.io/library/docker
-                  tag: 27-dind
-                command:
-                  - dockerd
-                  - --host=unix:///var/run/docker.sock
-                  - --insecure-registry=registry.registry.svc.cluster.local
-                securityContext:
-                  privileged: true
-        service:
-          server:
-            controller: server
-            ports:
-              http:
-                port: 8080
-                protocol: HTTP
-        persistence:
-          socket:
-            type: emptyDir
-            advancedMounts:
-              worker:
-                app:
-                  - path: /var/run
-                    subPath: docker.sock
-                docker:
-                  - path: /var/run
-                    subPath: docker.sock
+            app:
+              - path: /var/run
+                subPath: docker.sock
+            docker:
+              - path: /var/run
+                subPath: docker.sock

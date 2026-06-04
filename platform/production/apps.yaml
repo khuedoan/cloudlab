@@ -1,47 +1,26 @@
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
 metadata:
   name: apps
+  namespace: flux-system
 spec:
-  goTemplate: true
-  goTemplateOptions:
-    - missingkey=error
-  generators:
-    - list:
-        elements:
-          - namespace: test
-            app: example
-          - namespace: khuedoan
-            app: blog
-            # - namespace: khuedoan
-            #   app: notes
-            # - namespace: khuedoan
-            #   app: homelab-docs
-            # - namespace: finance
-            #   app: actualbudget
-  template:
-    metadata:
-      name: '{{.namespace}}-{{.app}}'
-    spec:
-      project: default # TODO
-      destination:
-        name: in-cluster
-        namespace: '{{.namespace}}'
-      sources:
-        - repoURL: 'oci://ghcr.io/bjw-s-labs/helm/app-template'
-          targetRevision: 4.2.0
-          path: .
-          helm:
-            valueFiles:
-              - $values/apps/{{.namespace}}/{{.app}}/production.yaml
-        - repoURL: 'http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab'
-          targetRevision: master
-          ref: values
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ApplyOutOfSyncOnly=true
-          - ServerSideApply=true
+  interval: 30s
+  url: oci://registry.registry.svc.cluster.local/apps
+  insecure: true
+  ref:
+    tag: production
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  interval: 1m
+  dependsOn:
+    - name: platform
+  path: .
+  prune: true
+  sourceRef:
+    kind: OCIRepository
+    name: apps

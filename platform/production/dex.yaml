@@ -1,94 +1,186 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
 metadata:
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   name: dex
+  namespace: flux-system
 spec:
-  destination:
-    name: in-cluster
-    namespace: dex
-  project: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ApplyOutOfSyncOnly=true
-      - ServerSideApply=true
-  source:
-    repoURL: https://charts.dexidp.io
-    chart: dex
-    targetRevision: 0.23.0
-    helm:
-      valuesObject:
+  type: oci
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local/vendor/charts/dex
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex-secrets
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: dex-secrets
+  targetNamespace: dex
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      dex-secrets:
+        apiVersion: v1
+        kind: Secret
+        forceRename: dex-secrets
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            # Keep Vault resolution on the Secret object. Inline vault: env values
+            # make Dex depend on pod mutation, and that path breaks here because
+            # the webhook cannot use the K3s image mirror config for registry lookups.
+            ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
+            KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
+            ACTUALBUDGET_CLIENT_SECRET: vault:secret/data/actualbudget/auth#client_secret
+            FORGEJO_CLIENT_SECRET: vault:secret/data/forgejo/oauth#secret
+            GRAFANA_CLIENT_SECRET: vault:secret/data/grafana/oauth#client_secret
+            KIALI_CLIENT_SECRET: vault:secret/data/kiali/oauth#client_secret
+            TEMPORAL_CLIENT_SECRET: vault:secret/data/temporal/oauth#client_secret
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex
+  namespace: flux-system
+spec:
+  interval: 3m
+  dependsOn:
+    - name: platform-namespaces
+    - name: dex-secrets
+  chart:
+    spec:
+      chart: dex
+      version: 0.23.0
+      sourceRef:
+        kind: HelmRepository
+        name: dex
+  releaseName: dex
+  targetNamespace: dex
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  values:
+    image:
+      repository: registry.registry.svc.cluster.local/vendor/images/dexidp/dex
+      tag: v2.43.1
+    envFrom:
+      - secretRef:
+          name: dex-secrets
+    config:
+      issuer: https://dex.production.khuedoan.com
+      storage:
+        type: kubernetes
         config:
-          issuer: https://dex.cloudlab.khuedoan.com
-          storage:
-            type: kubernetes
-            config:
-              inCluster: true
-          oauth2:
-            passwordConnector: local
-            skipApprovalScreen: true
-          enablePasswordDB: true
-          staticPasswords:
-            # uuidgen
-            # echo foo | nix-shell -p apacheHttpd --command "htpasswd -BinC 10 admin" | cut -d: -f2
-            - username: admin
-              email: admin@cloudlab.khuedoan.com
-              userID: "b34bd9d2-70ed-4ee1-8d22-6e4fc84f8d17"
-              hashFromEnv: ADMIN_PASSWORD_HASH
-            - username: khuedoan
-              email: mail@khuedoan.com
-              userID: "41dd7db5-4cb3-4856-a7f1-0d5168a10a12"
-              hashFromEnv: KHUEDOAN_PASSWORD_HASH
-          staticClients:
-            - id: argocd
-              name: ArgoCD
-              redirectURIs:
-                - 'https://argocd.cloudlab.khuedoan.com/auth/callback'
-              secretEnv: ARGOCD_CLIENT_SECRET
-            - id: grafana
-              name: Grafana
-              redirectURIs:
-                - 'https://grafana.cloudlab.khuedoan.com/login/generic_oauth'
-              secretEnv: GRAFANA_CLIENT_SECRET
-            - id: kiali
-              name: Kiali
-              redirectURIs:
-                - 'https://kiali.cloudlab.khuedoan.com'
-              secretEnv: KIALI_CLIENT_SECRET
-            - id: temporal
-              name: Temporal
-              redirectURIs:
-                - 'https://temporal.cloudlab.khuedoan.com/auth/sso/callback'
-              secretEnv: TEMPORAL_CLIENT_SECRET
-            - id: forgejo
-              name: Forgejo
-              redirectURIs:
-                - 'https://code.khuedoan.com/user/oauth2/SSO/callback'
-              secretEnv: FORGEJO_CLIENT_SECRET
-            - id: wireguard
-              name: WireGuard
-              redirectURIs:
-                - 'https://wireguard.cloudlab.khuedoan.com/api/v0/auth/login/sso/callback'
-              secretEnv: WIREGUARD_CLIENT_SECRET
-        envFrom:
-          - secretRef:
-              name: dex-secrets
-        ingress:
-          enabled: true
-          className: nginx
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-          hosts:
-            - host: dex.cloudlab.khuedoan.com
-              paths:
-                - path: /
-                  pathType: ImplementationSpecific
-          tls:
-            - secretName: dex-tls-certificate
-              hosts:
-                - dex.cloudlab.khuedoan.com
+          inCluster: true
+      oauth2:
+        passwordConnector: local
+        skipApprovalScreen: true
+      enablePasswordDB: true
+      staticPasswords:
+        - username: admin
+          email: admin@cloudlab.khuedoan.com
+          userID: "b34bd9d2-70ed-4ee1-8d22-6e4fc84f8d17"
+          hashFromEnv: ADMIN_PASSWORD_HASH
+        - username: khuedoan
+          email: mail@khuedoan.com
+          userID: "41dd7db5-4cb3-4856-a7f1-0d5168a10a12"
+          hashFromEnv: KHUEDOAN_PASSWORD_HASH
+      staticClients:
+        - id: actualbudget
+          name: Actual Budget
+          redirectURIs:
+            - "https://budget.production.khuedoan.com/openid/callback"
+          secretEnv: ACTUALBUDGET_CLIENT_SECRET
+        - id: forgejo
+          name: Forgejo
+          redirectURIs:
+            - "https://code.production.khuedoan.com/user/oauth2/SSO/callback"
+          secretEnv: FORGEJO_CLIENT_SECRET
+        - id: grafana
+          name: Grafana
+          redirectURIs:
+            - "https://grafana.production.khuedoan.com/login/generic_oauth"
+          secretEnv: GRAFANA_CLIENT_SECRET
+        - id: kiali
+          name: Kiali
+          redirectURIs:
+            - "https://kiali.production.khuedoan.com"
+          secretEnv: KIALI_CLIENT_SECRET
+        - id: temporal
+          name: Temporal
+          redirectURIs:
+            - "https://temporal.production.khuedoan.com/auth/sso/callback"
+          secretEnv: TEMPORAL_CLIENT_SECRET
+    podAnnotations:
+      istio.io/dataplane-mode: ambient
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dex-config
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: istio-gateway
+  releaseName: dex-config
+  targetNamespace: dex
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      dex-route:
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        forceRename: dex
+        spec:
+          spec:
+            parentRefs:
+              - name: gateway
+                namespace: istio-system
+            hostnames:
+              - dex.production.khuedoan.com
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: dex
+                    port: 5556

@@ -1,0 +1,95 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://charts.jetstack.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+  chart:
+    spec:
+      chart: cert-manager
+      version: 1.18.2
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+  releaseName: cert-manager
+  targetNamespace: cert-manager
+  install:
+    createNamespace: true
+    # TODO make this the default?
+    remediation:
+      retries: -1
+  values:
+    config:
+      enableGatewayAPI: true
+      featureGates:
+        ACMEHTTP01IngressPathTypeExact: false
+    crds:
+      enabled: true
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager-config
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: platform-namespaces
+    - name: cert-manager
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: cert-manager-config
+  targetNamespace: cert-manager
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      cloudflare-api-token:
+        apiVersion: v1
+        kind: Secret
+        forceRename: cloudflare-api-token
+        annotations:
+          # TODO dedicated SA for cert-manager
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            api-token: vault:secret/data/platform/cloudflare#API_TOKEN
+      letsencrypt:
+        apiVersion: cert-manager.io/v1
+        kind: ClusterIssuer
+        forceRename: letsencrypt
+        spec:
+          spec:
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              privateKeySecretRef:
+                name: letsencrypt-account-key
+              solvers:
+                - dns01:
+                    cloudflare:
+                      apiTokenSecretRef:
+                        name: cloudflare-api-token
+                        key: api-token
