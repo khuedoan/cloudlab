@@ -1,6 +1,6 @@
 defaultPodOptions:
   labels:
-    "istio.io/dataplane-mode": "ambient"
+    istio.io/dataplane-mode: ambient
 controllers:
   main:
     containers:
@@ -44,24 +44,24 @@ service:
       http:
         port: 80
         protocol: HTTP
-ingress:
+route:
   main:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: homelab.khuedoan.com
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            service:
-              identifier: main
-              port: http
-    tls:
-      - hosts:
-          - homelab.khuedoan.com
-        secretName: homelab-docs-tls-certificate
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: istio-system
+    hostnames:
+      - homelab.production.khuedoan.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: main
+            port: 80
 persistence:
   source:
     type: emptyDir

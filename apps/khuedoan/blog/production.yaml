@@ -9,7 +9,7 @@ controllers:
       main:
         image:
           repository: registry.registry.svc.cluster.local/khuedoan/blog
-          tag: 2c3e9c2aa204804e00db4234628f00cde03303a7
+          tag: b1e6bb730ce8193e10a6981d59e509132cfaa749
 service:
   main:
     controller: main
@@ -17,21 +17,21 @@ service:
       http:
         port: 3000
         protocol: HTTP
-ingress:
+route:
   main:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-    - host: www.khuedoan.com
-      paths:
-      - path: /
-        pathType: Prefix
-        service:
-          identifier: main
-          port: 3000
-    tls:
-    - hosts:
-      - www.khuedoan.com
-      secretName: blog-tls-certificate
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: istio-system
+    hostnames:
+      - www.production.khuedoan.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: main
+            port: 3000
