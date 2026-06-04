@@ -81,6 +81,11 @@ backups:
         runAsGroup: 0
         runAsUser: 0
 vendors:
+  vendor/charts/app-template:
+    kind: chart
+    ref: oci://ghcr.io/bjw-s-labs/helm/app-template
+    versions:
+      - 4.6.0
   vendor/charts/cloudnative-pg:
     kind: chart
     repo_url: https://cloudnative-pg.github.io/charts
