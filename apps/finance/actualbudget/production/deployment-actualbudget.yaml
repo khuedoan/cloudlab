@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actualbudget
+  namespace: finance-actualbudget-production
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: actualbudget
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: actualbudget
+        istio.io/dataplane-mode: ambient
+    spec:
+      containers:
+      - env:
+        - name: ACTUAL_LOGIN_METHOD
+          value: openid
+        - name: ACTUAL_OPENID_DISCOVERY_URL
+          value: https://dex.production.khuedoan.com/.well-known/openid-configuration
+        - name: ACTUAL_OPENID_CLIENT_ID
+          value: actualbudget
+        - name: ACTUAL_OPENID_CLIENT_SECRET
+          value: vault:secret/data/actualbudget/auth#client_secret
+        - name: ACTUAL_OPENID_SERVER_HOSTNAME
+          value: https://budget.production.khuedoan.com
+        - name: ACTUAL_USER_CREATION_MODE
+          value: login
+        image: docker.io/actualbudget/actual-server:latest-alpine
+        name: actualbudget
+        ports:
+        - containerPort: 5006
+          name: http
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: actualbudget

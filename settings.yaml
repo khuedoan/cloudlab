@@ -33,6 +33,9 @@ secrets:
   secret/actualbudget/auth:
     client_secret:
       type: random
+  secret/test/example:
+    MOCK_API_KEY:
+      type: random
   secret/temporal/oauth:
     client_secret:
       type: random
@@ -75,7 +78,7 @@ secrets:
         (Generate with: echo mypassword | htpasswd -BinC 10 "" | cut -d: -f2)
 backups:
   volumes:
-    finance/actualbudget: {}
+    finance-actualbudget-production/actualbudget: {}
     forgejo/gitea-shared-storage:
       mover_security_context:
         runAsGroup: 0
