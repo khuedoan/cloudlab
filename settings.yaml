@@ -39,6 +39,29 @@ secrets:
   secret/temporal/postgresql:
     password:
       type: random
+  secret/backup/restic:
+    password:
+      type: manual
+      description: |
+        Enter the durable restic repository password.
+        This must be preserved outside the cluster; changing it makes existing backups unreadable.
+  secret/backup/s3:
+    bucket:
+      type: manual
+      description: |
+        Enter S3-compatible backup bucket without leading or trailing slashes.
+    endpoint:
+      type: manual
+      description: |
+        Enter S3-compatible backup endpoint without a trailing slash.
+    access_key_id:
+      type: manual
+      description: |
+        Enter S3-compatible backup access key ID.
+    secret_access_key:
+      type: manual
+      description: |
+        Enter S3-compatible backup secret access key.
   secret/dex/auth:
     ADMIN_PASSWORD_HASH:
       type: manual
@@ -50,6 +73,13 @@ secrets:
       description: |
         Enter Dex khuedoan password hash.
         (Generate with: echo mypassword | htpasswd -BinC 10 "" | cut -d: -f2)
+backups:
+  volumes:
+    finance/actualbudget: {}
+    forgejo/gitea-shared-storage:
+      mover_security_context:
+        runAsGroup: 0
+        runAsUser: 0
 vendors:
   vendor/charts/cloudnative-pg:
     kind: chart
@@ -57,6 +87,17 @@ vendors:
     chart: cloudnative-pg
     versions:
       - 0.28.0
+  vendor/charts/snapshot-controller:
+    kind: chart
+    ref: oci://ghcr.io/piraeusdatastore/helm-charts/snapshot-controller
+    versions:
+      - 5.0.4
+  vendor/charts/volsync:
+    kind: chart
+    repo_url: https://backube.github.io/helm-charts
+    chart: volsync
+    versions:
+      - 0.14.0
   vendor/images/cloudnative-pg/cloudnative-pg:
     kind: image
     source: ghcr.io/cloudnative-pg/cloudnative-pg
