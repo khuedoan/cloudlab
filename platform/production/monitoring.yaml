@@ -98,6 +98,8 @@ spec:
     prometheusOperator:
       admissionWebhooks:
         enabled: false
+      tls:
+        enabled: false
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
