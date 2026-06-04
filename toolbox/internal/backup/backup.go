@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	volsyncv1alpha1 "github.com/backube/volsync/api/v1alpha1"
+	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/yaml"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -133,7 +134,7 @@ func RenderYAML(objects []Object) ([]byte, error) {
 		if i > 0 {
 			builder.WriteString("---\n")
 		}
-		data, err := yaml.Marshal(object)
+		data, err := k8syaml.Marshal(object)
 		if err != nil {
 			return nil, fmt.Errorf("marshal %s/%s: %w", object.GetNamespace(), object.GetName(), err)
 		}

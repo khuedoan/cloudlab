@@ -8,9 +8,8 @@ import (
 )
 
 const (
-	stagingEnvironment = "staging"
-	podDetachTimeout   = 5 * time.Minute
-	restoreTimeout     = 30 * time.Minute
+	podDetachTimeout = 5 * time.Minute
+	restoreTimeout   = 30 * time.Minute
 )
 
 var (
@@ -23,7 +22,6 @@ func init() {
 	backupCmd.PersistentFlags().StringVar(&backupEnv, "env", "", "Environment to manage backups for")
 	backupCmd.PersistentFlags().StringVar(&backupSettingsFile, "settings", "settings.yaml", "Path to settings YAML file")
 	backupCmd.PersistentFlags().StringArrayVar(&backupVolumeSelectors, "volume", nil, "Configured volume to operate on in namespace/pvc format; repeat for multiple volumes")
-	_ = backupCmd.MarkPersistentFlagRequired("env")
 
 	backupCmd.AddCommand(backupSetupCmd)
 	backupCmd.AddCommand(backupRestoreCmd)
@@ -56,8 +54,8 @@ var backupRestoreCmd = &cobra.Command{
 }
 
 func validateBackupFlags() error {
-	if backupEnv != stagingEnvironment {
-		return fmt.Errorf("backup is currently implemented for %s only, got %q", stagingEnvironment, backupEnv)
+	if backupEnv == "" {
+		return fmt.Errorf("--env is required")
 	}
 	return requireExecutables("kubectl")
 }
