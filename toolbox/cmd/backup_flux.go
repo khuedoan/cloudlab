@@ -3,65 +3,71 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/khuedoan/cloudlab/toolbox/internal/backup"
 )
 
-func suspendFlux(ctx context.Context, volumes []backup.Volume) ([]string, error) {
-	releases, err := targetHelmReleases(ctx, volumes)
-	if err != nil {
-		return nil, err
-	}
-	for _, name := range releases {
-		if err := patchHelmRelease(ctx, name, true); err != nil {
-			return nil, err
-		}
-	}
-	return releases, nil
+type fluxResource struct {
+	kind string
+	name string
 }
 
-func resumeFlux(ctx context.Context, releases []string) error {
-	for _, name := range releases {
-		if err := patchHelmRelease(ctx, name, false); err != nil {
+func suspendFlux(ctx context.Context, volumes []backup.Volume) ([]fluxResource, error) {
+	var suspended []fluxResource
+	for _, resource := range targetFluxResources(targetNamespaces(volumes)) {
+		active, err := fluxResourceActive(ctx, resource)
+		if err != nil {
+			return nil, err
+		}
+		if !active {
+			continue
+		}
+		if err := patchFluxResource(ctx, resource, true); err != nil {
+			return nil, err
+		}
+		suspended = append(suspended, resource)
+	}
+	return suspended, nil
+}
+
+func resumeFlux(ctx context.Context, resources []fluxResource) error {
+	for _, resource := range resources {
+		if err := patchFluxResource(ctx, resource, false); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func targetHelmReleases(ctx context.Context, volumes []backup.Volume) ([]string, error) {
-	output, err := runKubectl(ctx, "-n", fluxNamespace, "get", "helmrelease", "-o", `jsonpath={range .items[*]}{.metadata.name}{"\t"}{.spec.targetNamespace}{"\t"}{.metadata.namespace}{"\t"}{.spec.suspend}{"\n"}{end}`)
-	if err != nil {
-		return nil, fmt.Errorf("list HelmReleases: %w", err)
+func targetFluxResources(namespaces []string) []fluxResource {
+	resources := make([]fluxResource, 0, len(namespaces)*2)
+	for _, namespace := range namespaces {
+		resources = append(
+			resources,
+			fluxResource{kind: "helmrelease", name: namespace},
+			fluxResource{kind: "kustomization", name: namespace},
+		)
 	}
-
-	namespaces := targetNamespaces(volumes)
-
-	names := make([]string, 0)
-	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		fields := strings.Split(line, "\t")
-		if len(fields) < 4 {
-			continue
-		}
-		targetNamespace := fields[1]
-		if targetNamespace == "" {
-			targetNamespace = fields[2]
-		}
-		if slices.Contains(namespaces, targetNamespace) && fields[3] != "true" {
-			names = append(names, fields[0])
-		}
-	}
-	slices.Sort(names)
-	return names, nil
+	return resources
 }
 
-func patchHelmRelease(ctx context.Context, name string, suspend bool) error {
-	patch := fmt.Sprintf(`{"spec":{"suspend":%t}}`, suspend)
-	output, err := runKubectl(ctx, "-n", fluxNamespace, "patch", "helmrelease", name, "--type=merge", "-p", patch)
+func fluxResourceActive(ctx context.Context, resource fluxResource) (bool, error) {
+	output, err := runKubectl(ctx, "-n", fluxNamespace, "get", resource.kind, resource.name, "-o", "jsonpath={.spec.suspend}")
 	if err != nil {
-		return fmt.Errorf("patch HelmRelease %s: %w", name, err)
+		if strings.Contains(string(output), "NotFound") {
+			return false, nil
+		}
+		return false, fmt.Errorf("get %s %s: %w", resource.kind, resource.name, err)
+	}
+	return strings.TrimSpace(string(output)) != "true", nil
+}
+
+func patchFluxResource(ctx context.Context, resource fluxResource, suspend bool) error {
+	patch := fmt.Sprintf(`{"spec":{"suspend":%t}}`, suspend)
+	output, err := runKubectl(ctx, "-n", fluxNamespace, "patch", resource.kind, resource.name, "--type=merge", "-p", patch)
+	if err != nil {
+		return fmt.Errorf("patch %s %s: %w", resource.kind, resource.name, err)
 	}
 	logCommandOutput(output)
 	return nil

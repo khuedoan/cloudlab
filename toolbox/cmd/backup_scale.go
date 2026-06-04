@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/khuedoan/cloudlab/toolbox/internal/backup"
@@ -27,14 +28,11 @@ func scaleNamespaceWorkloads(ctx context.Context, namespace string, replicas int
 }
 
 func targetNamespaces(volumes []backup.Volume) []string {
-	namespaces := make([]string, 0)
+	namespaces := map[string]bool{}
 	for _, volume := range volumes {
-		if slices.Contains(namespaces, volume.Namespace) {
-			continue
-		}
-		namespaces = append(namespaces, volume.Namespace)
+		namespaces[volume.Namespace] = true
 	}
-	return namespaces
+	return slices.Sorted(maps.Keys(namespaces))
 }
 
 func waitForPodsDetached(ctx context.Context, volumes []backup.Volume) error {

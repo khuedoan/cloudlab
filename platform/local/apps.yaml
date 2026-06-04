@@ -16,7 +16,7 @@ spec:
           - namespace: khuedoan
             app: notes
           - namespace: khuedoan
-            app: homelab-docs
+            app: homelab
           - namespace: finance
             app: actualbudget
   template:

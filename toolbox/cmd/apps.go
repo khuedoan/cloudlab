@@ -11,17 +11,15 @@ import (
 	appbundle "github.com/khuedoan/cloudlab/toolbox/internal/apps"
 )
 
-const appsRepository = "apps"
-
-var (
-	appsEnv  string
-	appsPath string
+const (
+	appsRepository = "apps"
+	appsTag        = "latest"
 )
 
+var appsPath string
+
 func init() {
-	appsCmd.Flags().StringVar(&appsEnv, "env", "", "Environment to generate (for example: staging)")
-	appsCmd.Flags().StringVar(&appsPath, "path", "apps", "Path to the app values tree")
-	_ = appsCmd.MarkFlagRequired("env")
+	appsCmd.Flags().StringVar(&appsPath, "path", "apps", "Path to the app manifest tree")
 }
 
 var appsCmd = &cobra.Command{
@@ -40,28 +38,60 @@ func runApps(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("resolve path %q: %w", appsPath, err)
 	}
 
-	releases, err := appbundle.Discover(sourcePath, appsEnv)
-	if err != nil {
-		return fmt.Errorf("discover apps: %w", err)
-	}
-
 	bundleDir, err := os.MkdirTemp("", "toolbox-apps-*")
 	if err != nil {
 		return fmt.Errorf("create temp dir: %w", err)
 	}
 	defer os.RemoveAll(bundleDir)
 
-	if err := appbundle.WriteBundle(bundleDir, releases); err != nil {
+	bundle, err := appbundle.WriteBundle(bundleDir, sourcePath, appsRepository, appsTag)
+	if err != nil {
 		return fmt.Errorf("write bundle: %w", err)
 	}
 
-	log.Infof("generated %d app HelmRelease(s) for %s", len(releases), appsEnv)
+	log.Infof("bundled %d app manifest file(s) into %d app artifact(s)", bundle.Count, len(bundle.Apps))
 
-	return pushArtifact(cmd.Context(), bundleDir, artifactRef{
+	tunnel, err := startKubectlPortForward(cmd.Context(), registryNamespace, registryService, registryPort)
+	if err != nil {
+		return fmt.Errorf("forward registry: %w", err)
+	}
+	defer tunnel.Close()
+
+	for _, app := range bundle.Apps {
+		if err := pushArtifactToRegistry(cmd.Context(), tunnel.addr, app.Dir, artifactRef{
+			Repository:    app.Repository,
+			Tag:           appsTag,
+			Source:        app.Name,
+			Revision:      appsTag,
+			Kustomization: app.Name,
+		}); err != nil {
+			return fmt.Errorf("push %s: %w", app.Name, err)
+		}
+	}
+
+	root := artifactRef{
 		Repository:    appsRepository,
-		Tag:           appsEnv,
+		Tag:           appsTag,
 		Source:        appsRepository,
-		Revision:      appsEnv,
+		Revision:      appsTag,
 		Kustomization: appsRepository,
-	})
+	}
+	if err := pushArtifactToRegistry(cmd.Context(), tunnel.addr, bundle.RootDir, root); err != nil {
+		return err
+	}
+
+	if err := reconcileArtifact(cmd.Context(), root); err != nil {
+		return err
+	}
+
+	for _, app := range bundle.Apps {
+		if err := reconcileArtifact(cmd.Context(), artifactRef{
+			Source:        app.Name,
+			Kustomization: app.Name,
+		}); err != nil {
+			return fmt.Errorf("reconcile %s: %w", app.Name, err)
+		}
+	}
+
+	return nil
 }

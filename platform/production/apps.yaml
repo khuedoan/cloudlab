@@ -8,7 +8,7 @@ spec:
   url: oci://registry.registry.svc.cluster.local/apps
   insecure: true
   ref:
-    tag: production
+    tag: latest
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

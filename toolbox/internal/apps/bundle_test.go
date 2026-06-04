@@ -3,144 +3,172 @@ package apps
 import (
 	"os"
 	"path/filepath"
-	"slices"
+	"strings"
 	"testing"
-
-	"gopkg.in/yaml.v3"
 )
 
-func TestDiscoverFiltersByEnvironment(t *testing.T) {
-	rootDir := t.TempDir()
+func TestWriteBundleCopiesPlainManifests(t *testing.T) {
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: khuedoan-blog-staging
+`
 
-	writeFile(t, filepath.Join(rootDir, "khuedoan", "blog", "staging.yaml"), "controllers:\n  main:\n    replicas: 2\n")
-	writeFile(t, filepath.Join(rootDir, "finance", "actualbudget", "staging.yaml"), "service:\n  main:\n    controller: main\n")
-	writeFile(t, filepath.Join(rootDir, "test", "example", "production.yaml"), "ignored: true\n")
+	writeFile(t, filepath.Join(sourceDir, "khuedoan", "blog", "staging", "namespace-khuedoan-blog-staging.yaml"), manifest)
+	writeFile(t, filepath.Join(sourceDir, "notes.md"), "# ignored\n")
 
-	releases, err := Discover(rootDir, "staging")
+	bundle, err := WriteBundle(outputDir, sourceDir, "apps", "latest")
 	if err != nil {
-		t.Fatalf("discover staging apps: %v", err)
+		t.Fatalf("write bundle: %v", err)
+	}
+	if bundle.Count != 1 || len(bundle.Apps) != 1 {
+		t.Fatalf("expected 1 manifest and 1 app, got %d manifest(s) and %d app(s)", bundle.Count, len(bundle.Apps))
 	}
 
-	if len(releases) != 2 {
-		t.Fatalf("expected 2 releases, got %d", len(releases))
+	app := bundle.Apps[0]
+	if app.Name != "khuedoan-blog-staging" || app.Repository != "apps/khuedoan/blog/staging" {
+		t.Fatalf("unexpected app bundle: %#v", app)
 	}
 
-	gotNames := []string{releases[0].Metadata.Name, releases[1].Metadata.Name}
-	wantNames := []string{"finance-actualbudget", "khuedoan-blog"}
-	if !slices.Equal(gotNames, wantNames) {
-		t.Fatalf("expected release names %v, got %v", wantNames, gotNames)
+	copied, err := os.ReadFile(filepath.Join(app.Dir, "namespace-khuedoan-blog-staging.yaml"))
+	if err != nil {
+		t.Fatalf("read copied manifest: %v", err)
+	}
+	if string(copied) != manifest {
+		t.Fatalf("copied manifest changed:\n%s", copied)
 	}
 
-	if releases[0].Spec.TargetNamespace != "finance" {
-		t.Fatalf("expected finance namespace, got %q", releases[0].Spec.TargetNamespace)
+	source := readFile(t, filepath.Join(bundle.RootDir, "ocirepository-khuedoan-blog-staging.yaml"))
+	if !strings.Contains(source, "url: oci://registry.registry.svc.cluster.local/apps/khuedoan/blog/staging") {
+		t.Fatalf("generated source has wrong URL:\n%s", source)
 	}
 
-	controllers, ok := releases[1].Spec.Values["controllers"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected controllers map, got %T", releases[1].Spec.Values["controllers"])
-	}
-
-	main, ok := controllers["main"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected main controller map, got %T", controllers["main"])
-	}
-
-	if main["replicas"] != 2 {
-		t.Fatalf("expected replicas 2, got %#v", main["replicas"])
+	kustomization := readFile(t, filepath.Join(bundle.RootDir, "kustomization-khuedoan-blog-staging.yaml"))
+	if !strings.Contains(kustomization, "path: .") || !strings.Contains(kustomization, "name: khuedoan-blog-staging") {
+		t.Fatalf("generated kustomization has wrong source/path:\n%s", kustomization)
 	}
 }
 
-func TestWriteBundleCreatesKustomizationAndResources(t *testing.T) {
-	outputDir := t.TempDir()
-	releases := []Release{
+func TestWriteBundleRejectsInvalidInput(t *testing.T) {
+	cases := []struct {
+		name    string
+		path    string
+		content string
+		wantErr string
+	}{
 		{
-			APIVersion: helmReleaseVersion,
-			Kind:       helmReleaseKind,
-			Metadata: Metadata{
-				Name:      "khuedoan-blog",
-				Namespace: fluxNamespace,
-			},
-			Spec: ReleaseSpec{
-				Interval:        reconcileInterval,
-				ReleaseName:     "blog",
-				TargetNamespace: "khuedoan",
-				Install: InstallSpec{
-					CreateNamespace: true,
-				},
-				Chart: Chart{
-					Spec: ChartSpec{
-						Chart:   chartName,
-						Version: chartVersion,
-						SourceRef: SourceRef{
-							Kind: helmRepositoryKind,
-							Name: helmRepositoryName,
-						},
-					},
-				},
-				Values: map[string]any{
-					"service": map[string]any{
-						"main": map[string]any{
-							"controller": "main",
-						},
-					},
-				},
-			},
+			name:    "non manifest YAML",
+			path:    "khuedoan/blog/staging/namespace-khuedoan-blog-staging.yaml",
+			content: "controllers: {}\n",
+			wantErr: "missing apiVersion",
+		},
+		{
+			name: "kustomization file",
+			path: "khuedoan/blog/staging/kustomization.yaml",
+			content: `apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: blog
+`,
+			wantErr: "not supported",
+		},
+		{
+			name: "multiple manifests",
+			path: "khuedoan/blog/staging/namespace-khuedoan-blog-staging.yaml",
+			content: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: khuedoan-blog-staging
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog
+`,
+			wantErr: "expected one Kubernetes manifest per file",
+		},
+		{
+			name: "wrong filename",
+			path: "khuedoan/blog/staging/blog.yaml",
+			content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+`,
+			wantErr: "expected filename deployment-blog.yaml",
+		},
+		{
+			name: "namespace object outside app namespace",
+			path: "khuedoan/blog/staging/namespace-other.yaml",
+			content: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: other
+`,
+			wantErr: `Namespace name must be "khuedoan-blog-staging"`,
+		},
+		{
+			name: "namespaced object outside app namespace",
+			path: "khuedoan/blog/staging/deployment-blog.yaml",
+			content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+  namespace: other
+`,
+			wantErr: `metadata.namespace must be "khuedoan-blog-staging"`,
+		},
+		{
+			name: "namespaced object missing namespace",
+			path: "khuedoan/blog/staging/deployment-blog.yaml",
+			content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+`,
+			wantErr: `metadata.namespace must be "khuedoan-blog-staging"`,
+		},
+		{
+			name: "unexpected path",
+			path: "khuedoan/blog/deployment-blog.yaml",
+			content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog
+`,
+			wantErr: "expected apps/$TENANT/$PROJECT/$APP_ENV/$RESOURCE.yaml",
+		},
+		{
+			name:    "empty tree",
+			wantErr: "no app manifests found",
 		},
 	}
 
-	if err := WriteBundle(outputDir, releases); err != nil {
-		t.Fatalf("write bundle: %v", err)
-	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			sourceDir := t.TempDir()
+			if tc.path != "" {
+				writeFile(t, filepath.Join(sourceDir, tc.path), tc.content)
+			}
 
-	kustomizationData, err := os.ReadFile(filepath.Join(outputDir, kustomizationFile))
-	if err != nil {
-		t.Fatalf("read kustomization: %v", err)
-	}
-
-	var manifest kustomization
-	if err := yaml.Unmarshal(kustomizationData, &manifest); err != nil {
-		t.Fatalf("decode kustomization: %v", err)
-	}
-
-	if !slices.Equal(manifest.Resources, []string{"khuedoan-blog.yaml"}) {
-		t.Fatalf("expected resources [khuedoan-blog.yaml], got %v", manifest.Resources)
-	}
-
-	resourceData, err := os.ReadFile(filepath.Join(outputDir, "khuedoan-blog.yaml"))
-	if err != nil {
-		t.Fatalf("read release manifest: %v", err)
-	}
-
-	var release Release
-	if err := yaml.Unmarshal(resourceData, &release); err != nil {
-		t.Fatalf("decode release manifest: %v", err)
-	}
-
-	if release.Spec.ReleaseName != "blog" {
-		t.Fatalf("expected release name blog, got %q", release.Spec.ReleaseName)
+			_, err := WriteBundle(t.TempDir(), sourceDir, "apps", "latest")
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("expected error containing %q, got %v", tc.wantErr, err)
+			}
+		})
 	}
 }
 
-func TestWriteBundleSupportsNoApps(t *testing.T) {
-	outputDir := t.TempDir()
+func readFile(t *testing.T, path string) string {
+	t.Helper()
 
-	if err := WriteBundle(outputDir, nil); err != nil {
-		t.Fatalf("write empty bundle: %v", err)
-	}
-
-	kustomizationData, err := os.ReadFile(filepath.Join(outputDir, kustomizationFile))
+	data, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("read kustomization: %v", err)
+		t.Fatalf("read %s: %v", path, err)
 	}
-
-	var manifest kustomization
-	if err := yaml.Unmarshal(kustomizationData, &manifest); err != nil {
-		t.Fatalf("decode kustomization: %v", err)
-	}
-
-	if len(manifest.Resources) != 0 {
-		t.Fatalf("expected no resources, got %v", manifest.Resources)
-	}
+	return string(data)
 }
 
 func writeFile(t *testing.T, path, content string) {
@@ -149,7 +177,6 @@ func writeFile(t *testing.T, path, content string) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatalf("create dir for %s: %v", path, err)
 	}
-
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write %s: %v", path, err)
 	}

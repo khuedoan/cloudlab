@@ -76,9 +76,10 @@
   - Essentially `kubectl apply -f "platform/${ENV}"`
   - However, the runtime doesn’t have access to Git - all manifests are pulled from an OCI registry
 - Apps aka SaaS:
-  - Strict and standardized
-  - Generated from `apps/$NAMESPACE/$APP/$ENV.yaml`
-  - Published to the cluster as a Flux OCI artifact
+  - Plain Kubernetes manifests under `apps/$TENANT/$PROJECT/$APP_ENV/`
+  - One resource per file, named `$KIND-$NAME.yaml` in lowercase
+  - App environments are independent from infra environments
+  - Published as one OCI artifact per app environment, plus a root Flux index artifact
 
 ## Estimated cost
 

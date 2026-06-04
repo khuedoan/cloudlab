@@ -31,7 +31,15 @@ func pushArtifact(ctx context.Context, manifestPath string, artifact artifactRef
 	}
 	defer tunnel.Close()
 
-	artifactURL := fmt.Sprintf("oci://%s/%s:%s", tunnel.addr, artifact.Repository, artifact.Tag)
+	if err := pushArtifactToRegistry(ctx, tunnel.addr, manifestPath, artifact); err != nil {
+		return err
+	}
+
+	return reconcileArtifact(ctx, artifact)
+}
+
+func pushArtifactToRegistry(ctx context.Context, registryAddr, manifestPath string, artifact artifactRef) error {
+	artifactURL := fmt.Sprintf("oci://%s/%s:%s", registryAddr, artifact.Repository, artifact.Tag)
 	args := []string{
 		"push",
 		"artifact",
@@ -53,9 +61,13 @@ func pushArtifact(ctx context.Context, manifestPath string, artifact artifactRef
 		log.Info(trimmed)
 	}
 
+	return nil
+}
+
+func reconcileArtifact(ctx context.Context, artifact artifactRef) error {
 	log.Infof("triggering Flux sync for %s/%s", fluxNamespace, artifact.Kustomization)
 
-	output, err = fluxOutput(ctx, "reconcile", "source", "oci", artifact.Source, "--namespace", fluxNamespace)
+	output, err := fluxOutput(ctx, "reconcile", "source", "oci", artifact.Source, "--namespace", fluxNamespace)
 	if err != nil {
 		return fmt.Errorf("trigger OCIRepository sync: %w", err)
 	}

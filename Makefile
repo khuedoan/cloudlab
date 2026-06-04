@@ -28,7 +28,6 @@ secrets:
 
 apps:
 	KUBECONFIG="${KUBECONFIG}" toolbox apps \
-		--env ${env} \
 		--path apps
 
 test:
