@@ -1,13 +1,20 @@
 defaultPodOptions:
   labels:
-    "istio.io/dataplane-mode": "ambient"
+    istio.io/dataplane-mode: ambient
 controllers:
   main:
     containers:
       main:
         image:
           repository: docker.io/actualbudget/actual-server
-          tag: 25.12.1-alpine
+          tag: latest-alpine
+        env:
+          ACTUAL_LOGIN_METHOD: openid
+          ACTUAL_OPENID_DISCOVERY_URL: https://dex.production.khuedoan.com/.well-known/openid-configuration
+          ACTUAL_OPENID_CLIENT_ID: actualbudget
+          ACTUAL_OPENID_CLIENT_SECRET: vault:secret/data/actualbudget/auth#client_secret
+          ACTUAL_OPENID_SERVER_HOSTNAME: https://budget.production.khuedoan.com
+          ACTUAL_USER_CREATION_MODE: login
 service:
   main:
     controller: main
@@ -15,24 +22,24 @@ service:
       http:
         port: 5006
         protocol: HTTP
-ingress:
+route:
   main:
-    enabled: true
-    className: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: budget.cloudlab.khuedoan.com
-        paths:
-          - path: /
-            pathType: Prefix
-            service:
-              identifier: main
-              port: http
-    tls:
-      - hosts:
-          - budget.cloudlab.khuedoan.com
-        secretName: actualbudget-tls-certificate
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: gateway
+        namespace: istio-system
+    hostnames:
+      - budget.production.khuedoan.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: main
+            port: 5006
 persistence:
   data:
     accessMode: ReadWriteOnce
