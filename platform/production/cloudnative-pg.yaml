@@ -5,6 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   type: oci
+  insecure: true
   interval: 1h
   url: oci://registry.registry.svc.cluster.local/vendor/charts/cloudnative-pg
 ---
