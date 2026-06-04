@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/log"
-
-	"github.com/khuedoan/cloudlab/toolbox/internal/cluster"
 )
 
 const (
@@ -28,36 +25,13 @@ type artifactRef struct {
 }
 
 func pushArtifact(ctx context.Context, manifestPath string, artifact artifactRef) error {
-	connectCtx, cancel := context.WithTimeout(ctx, connectTimeout)
-	defer cancel()
-
-	hostAddr, err := cluster.LoadHost(hostsFile, host)
-	if err != nil {
-		return fmt.Errorf("load host: %w", err)
-	}
-
-	conn, err := cluster.Connect(cluster.SSHConfig{
-		Host:           hostAddr,
-		User:           sshUser,
-		KeyPath:        sshKey,
-		KnownHostsPath: sshKnownHosts,
-		Timeout:        connectTimeout,
-	})
-	if err != nil {
-		return fmt.Errorf("connect to cluster: %w", err)
-	}
-	defer conn.Close()
-
-	tunnel, err := conn.Forward(connectCtx, cluster.ServiceConfig{
-		Namespace: registryNamespace,
-		Name:      registryService,
-		Port:      registryPort,
-	})
+	tunnel, err := startKubectlPortForward(ctx, registryNamespace, registryService, registryPort)
 	if err != nil {
 		return fmt.Errorf("forward registry: %w", err)
 	}
+	defer tunnel.Close()
 
-	artifactURL := fmt.Sprintf("oci://%s/%s:%s", tunnel.LocalAddr, artifact.Repository, artifact.Tag)
+	artifactURL := fmt.Sprintf("oci://%s/%s:%s", tunnel.addr, artifact.Repository, artifact.Tag)
 	args := []string{
 		"push",
 		"artifact",
@@ -79,26 +53,19 @@ func pushArtifact(ctx context.Context, manifestPath string, artifact artifactRef
 		log.Info(trimmed)
 	}
 
-	requestedAt := time.Now().UTC().Format(time.RFC3339Nano)
 	log.Infof("triggering Flux sync for %s/%s", fluxNamespace, artifact.Kustomization)
 
-	output, err = conn.RunCommandContext(
-		ctx,
-		fmt.Sprintf(
-			"kubectl annotate --overwrite -n %s ocirepository.source.toolkit.fluxcd.io/%s reconcile.fluxcd.io/requestedAt=%q && kubectl annotate --overwrite -n %s kustomization.kustomize.toolkit.fluxcd.io/%s reconcile.fluxcd.io/requestedAt=%q",
-			fluxNamespace, artifact.Source,
-			requestedAt,
-			fluxNamespace, artifact.Kustomization,
-			requestedAt,
-		),
-	)
+	output, err = fluxOutput(ctx, "reconcile", "source", "oci", artifact.Source, "--namespace", fluxNamespace)
 	if err != nil {
-		return fmt.Errorf("trigger flux sync: %w", err)
+		return fmt.Errorf("trigger OCIRepository sync: %w", err)
 	}
+	logCommandOutput(output)
 
-	if trimmed := strings.TrimSpace(string(output)); trimmed != "" {
-		log.Info(trimmed)
+	output, err = fluxOutput(ctx, "reconcile", "kustomization", artifact.Kustomization, "--namespace", fluxNamespace)
+	if err != nil {
+		return fmt.Errorf("trigger Kustomization sync: %w", err)
 	}
+	logCommandOutput(output)
 
 	return nil
 }

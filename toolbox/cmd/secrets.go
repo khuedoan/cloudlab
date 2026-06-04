@@ -1,36 +1,31 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 
-	"github.com/khuedoan/cloudlab/toolbox/internal/cluster"
 	"github.com/khuedoan/cloudlab/toolbox/internal/secrets"
 )
-
-const connectTimeout = 30 * time.Second
 
 var settingsFile string
 
 func init() {
 	secretsCmd.Flags().StringVar(&settingsFile, "settings", "", "Path to settings YAML file")
-	secretsCmd.MarkFlagRequired("settings")
+	_ = secretsCmd.MarkFlagRequired("settings")
 }
 
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
 	Short: "Manage secrets in Vault",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		return validateClusterFlags()
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		return requireExecutables("kubectl")
 	},
 	RunE: runSecrets,
 }
 
-func runSecrets(cmd *cobra.Command, args []string) error {
+func runSecrets(cmd *cobra.Command, _ []string) error {
 	config, err := secrets.LoadConfig(settingsFile)
 	if err != nil {
 		return fmt.Errorf("load settings file: %w", err)
@@ -41,23 +36,14 @@ func runSecrets(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("validate config: %w", err)
 	}
 
-	connectCtx, cancel := context.WithTimeout(cmd.Context(), connectTimeout)
-	defer cancel()
-
-	client, err := cluster.NewClient(connectCtx, cluster.ClientConfig{
-		HostsFile:     hostsFile,
-		Host:          host,
-		SSHUser:       sshUser,
-		SSHKey:        sshKey,
-		SSHKnownHosts: sshKnownHosts,
-	})
+	vault, stopVault, err := connectVault(cmd.Context())
 	if err != nil {
-		return fmt.Errorf("connect to cluster: %w", err)
+		return fmt.Errorf("connect to Vault: %w", err)
 	}
-	defer client.Close()
-	log.Debug("connected to cluster")
+	defer stopVault()
+	log.Debug("connected to Vault")
 
-	service := secrets.NewService(client.Vault(), secrets.HuhPrompter{})
+	service := secrets.NewService(vault, secrets.HuhPrompter{})
 	if err := service.Run(cmd.Context(), entries); err != nil {
 		return err
 	}

@@ -15,28 +15,20 @@ bootstrap: vendor platform secrets
 
 vendor:
 	toolbox vendor \
-		--settings settings.yaml \
-		--hosts-file infra/_modules/nixos/hosts.json \
-		--host hetzner-metal-1
+		--settings settings.yaml
 
 platform:
 	toolbox gitops \
-		--path platform/${env} \
-		--hosts-file infra/_modules/nixos/hosts.json \
-		--host hetzner-metal-1
+		--path platform/${env}
 
 secrets:
 	toolbox secrets \
-		--settings settings.yaml \
-		--hosts-file infra/_modules/nixos/hosts.json \
-		--host hetzner-metal-1
+		--settings settings.yaml
 
 apps:
 	toolbox apps \
 		--env ${env} \
-		--path apps \
-		--hosts-file infra/_modules/nixos/hosts.json \
-		--host hetzner-metal-1
+		--path apps
 
 test:
 	cd test && CLOUDLAB_ENV=${env} go test

@@ -3,7 +3,7 @@ package vendors
 import (
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -14,12 +14,12 @@ type Config struct {
 }
 
 type Vendor struct {
-	Kind                string   `yaml:"kind"`
-	RepoURL             string   `yaml:"repo_url,omitempty"`
-	Ref                 string   `yaml:"ref,omitempty"`
-	Chart               string   `yaml:"chart,omitempty"`
-	Versions            []string `yaml:"versions"`
-	Source              string   `yaml:"source,omitempty"`
+	Kind     string   `yaml:"kind"`
+	RepoURL  string   `yaml:"repo_url,omitempty"`
+	Ref      string   `yaml:"ref,omitempty"`
+	Chart    string   `yaml:"chart,omitempty"`
+	Versions []string `yaml:"versions"`
+	Source   string   `yaml:"source,omitempty"`
 }
 
 type VendorEntry struct {
@@ -46,7 +46,7 @@ func ParseAndValidate(config *Config) ([]VendorEntry, error) {
 	for name := range config.Items {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	entries := make([]VendorEntry, 0, len(names))
 

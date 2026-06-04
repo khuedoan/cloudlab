@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -26,20 +25,14 @@ func init() {
 
 var gitopsCmd = &cobra.Command{
 	Use:   "gitops",
-	Short: "Proxy the in-cluster registry and push the GitOps manifests artifact",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := validateClusterFlags(); err != nil {
-			return err
-		}
-		if _, err := exec.LookPath("flux"); err != nil {
-			return fmt.Errorf("find flux CLI: %w", err)
-		}
-		return nil
+	Short: "Push the GitOps manifests artifact",
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		return requireExecutables("flux", "kubectl")
 	},
 	RunE: runGitopsPush,
 }
 
-func runGitopsPush(cmd *cobra.Command, args []string) error {
+func runGitopsPush(cmd *cobra.Command, _ []string) error {
 	manifestPath, err := filepath.Abs(gitopsPath)
 	if err != nil {
 		return fmt.Errorf("resolve path %q: %w", gitopsPath, err)

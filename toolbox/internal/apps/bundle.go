@@ -133,7 +133,7 @@ func loadRelease(rootDir, path string) (Release, error) {
 		return Release{}, fmt.Errorf("resolve relative path for %s: %w", path, err)
 	}
 
-	parts := splitPath(relPath)
+	parts := strings.Split(filepath.ToSlash(relPath), "/")
 	if len(parts) != 3 {
 		return Release{}, fmt.Errorf("expected apps/$NAMESPACE/$APP/$ENV.yaml, got %s", relPath)
 	}
@@ -180,8 +180,4 @@ func loadRelease(rootDir, path string) (Release, error) {
 			Values: values,
 		},
 	}, nil
-}
-
-func splitPath(path string) []string {
-	return strings.Split(filepath.ToSlash(path), "/")
 }

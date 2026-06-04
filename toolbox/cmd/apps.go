@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/charmbracelet/log"
@@ -30,13 +29,7 @@ var appsCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Short: "Generate and push the apps manifest bundle",
 	PreRunE: func(_ *cobra.Command, _ []string) error {
-		if err := validateClusterFlags(); err != nil {
-			return err
-		}
-		if _, err := exec.LookPath("flux"); err != nil {
-			return fmt.Errorf("find flux CLI: %w", err)
-		}
-		return nil
+		return requireExecutables("flux", "kubectl")
 	},
 	RunE: runApps,
 }
