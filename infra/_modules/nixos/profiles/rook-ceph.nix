@@ -112,6 +112,7 @@ in
               mgr.count = 1;
               network.ipFamily = "IPv6";
               dashboard.enabled = false;
+              cleanupPolicy.wipeDevicesFromOtherClusters = true;
               cephConfig.global = {
                 mon_warn_on_pool_no_redundancy = "false";
                 ms_bind_ipv4 = "false";

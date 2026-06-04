@@ -55,14 +55,6 @@ generate "provider" {
           hcloud = {}
         }
       }
-      proxmox = {
-        provider = {
-          proxmox = {
-            endpoint = "https://proxmox:8006"
-            insecure = true
-          }
-        }
-      }
     },
     local.cloud,
     {}

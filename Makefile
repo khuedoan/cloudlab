@@ -2,6 +2,7 @@
 .PHONY: default compose infra bootstrap vendor platform secrets apps test fmt tidy update
 
 env ?= $(shell ls infra | fzf --prompt "Select environment: ")
+KUBECONFIG ?= $(shell terragrunt output --working-dir infra/${env}/nixos -raw kubeconfig_path 2>/dev/null)
 
 default: infra platform apps
 
@@ -14,19 +15,19 @@ infra:
 bootstrap: vendor platform secrets
 
 vendor:
-	toolbox vendor \
+	KUBECONFIG="${KUBECONFIG}" toolbox vendor \
 		--settings settings.yaml
 
 platform:
-	toolbox gitops \
+	KUBECONFIG="${KUBECONFIG}" toolbox gitops \
 		--path platform/${env}
 
 secrets:
-	toolbox secrets \
+	KUBECONFIG="${KUBECONFIG}" toolbox secrets \
 		--settings settings.yaml
 
 apps:
-	toolbox apps \
+	KUBECONFIG="${KUBECONFIG}" toolbox apps \
 		--env ${env} \
 		--path apps
 
