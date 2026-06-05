@@ -4,6 +4,7 @@ metadata:
   name: actualbudget
 spec:
   hostnames:
+  - budget.khuedoan.com
   - budget.production.khuedoan.com
   parentRefs:
   - group: gateway.networking.k8s.io

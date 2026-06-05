@@ -4,6 +4,7 @@ metadata:
   name: docs
 spec:
   hostnames:
+  - homelab.khuedoan.com
   - homelab.production.khuedoan.com
   parentRefs:
   - group: gateway.networking.k8s.io
