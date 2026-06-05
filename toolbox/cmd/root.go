@@ -13,7 +13,6 @@ func init() {
 	log.SetReportTimestamp(false)
 
 	rootCmd.AddCommand(gitopsCmd)
-	rootCmd.AddCommand(appsCmd)
 	rootCmd.AddCommand(secretsCmd)
 	rootCmd.AddCommand(vendorCmd)
 }
