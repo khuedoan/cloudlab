@@ -114,7 +114,7 @@ spec:
         - id: forgejo
           name: Forgejo
           redirectURIs:
-            - "https://code.production.khuedoan.com/user/oauth2/SSO/callback"
+            - "https://code.khuedoan.com/user/oauth2/SSO/callback"
           secretEnv: FORGEJO_CLIENT_SECRET
         - id: grafana
           name: Grafana

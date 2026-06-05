@@ -101,7 +101,7 @@ spec:
           TYPE: level
         server:
           LANDING_PAGE: explore
-          ROOT_URL: https://code.production.khuedoan.com
+          ROOT_URL: https://code.khuedoan.com
           OFFLINE_MODE: true
         repository:
           DISABLED_REPO_UNITS: repo.wiki,repo.projects,repo.packages
@@ -140,7 +140,7 @@ spec:
         - name: gateway
           namespace: istio-system
       hostnames:
-        - code.production.khuedoan.com
+        - code.khuedoan.com
     valkey-cluster:
       enabled: false
     valkey:
