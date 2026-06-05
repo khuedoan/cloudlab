@@ -49,7 +49,6 @@ spec:
               FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/homelab,khuedoan/example-service=test/example
               REGISTRY: registry.registry.svc.cluster.local
       bootstrap:
         labels:
@@ -89,10 +88,10 @@ spec:
               NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
               NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
               NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/homelab,khuedoan/example-service=test/example
               GITOPS_REPO: khuedoan/cloudlab
               GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
               GITOPS_REVISION: master
+              REGISTRY: registry.registry.svc.cluster.local
       worker:
         labels:
           istio.io/dataplane-mode: ambient

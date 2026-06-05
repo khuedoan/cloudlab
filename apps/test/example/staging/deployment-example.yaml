@@ -14,11 +14,11 @@ spec:
         istio.io/dataplane-mode: ambient
     spec:
       containers:
-      - envFrom:
-        - secretRef:
-            name: example
-        image: registry.registry.svc.cluster.local/test/example:918c5ba6a6586c6f8fb88f7a880e7ea2c97e6121
-        name: example
-        ports:
-        - containerPort: 8080
-          name: http
+        - envFrom:
+            - secretRef:
+                name: example
+          image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:918c5ba6a6586c6f8fb88f7a880e7ea2c97e6121
+          name: example
+          ports:
+            - containerPort: 8080
+              name: http

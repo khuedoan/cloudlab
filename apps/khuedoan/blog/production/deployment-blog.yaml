@@ -14,8 +14,8 @@ spec:
         istio.io/dataplane-mode: ambient
     spec:
       containers:
-      - image: registry.registry.svc.cluster.local/khuedoan/blog:b1e6bb730ce8193e10a6981d59e509132cfaa749
-        name: blog
-        ports:
-        - containerPort: 3000
-          name: http
+        - image: registry.registry.svc.cluster.local/apps/khuedoan/blog:b1e6bb730ce8193e10a6981d59e509132cfaa749
+          name: blog
+          ports:
+            - containerPort: 3000
+              name: http
