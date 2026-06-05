@@ -38,7 +38,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 8c9201a03c198a4de6239669cdbee03279664400
+              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
               pullPolicy: Always
             command:
               - /usr/local/bin/server
@@ -46,6 +46,7 @@ spec:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service=test/example
               REGISTRY: registry.registry.svc.cluster.local
       bootstrap:
         labels:
@@ -68,7 +69,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 8c9201a03c198a4de6239669cdbee03279664400
+              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -85,7 +86,7 @@ spec:
               NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
               NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
               NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service=test/example
               GITOPS_REPO: khuedoan/cloudlab
               GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
               GITOPS_REVISION: master
@@ -114,7 +115,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 8c9201a03c198a4de6239669cdbee03279664400
+              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
