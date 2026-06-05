@@ -1,10 +1,10 @@
 .POSIX:
-.PHONY: default compose infra bootstrap vendor platform secrets apps test fmt tidy update
+.PHONY: default compose infra bootstrap vendor platform secrets test fmt tidy update
 
 env ?= $(shell ls infra | fzf --prompt "Select environment: ")
 KUBECONFIG ?= $(shell terragrunt output --working-dir infra/${env}/nixos -raw kubeconfig_path 2>/dev/null)
 
-default: infra platform apps
+default: infra platform
 
 compose:
 	docker compose up --build --detach
@@ -25,10 +25,6 @@ platform:
 secrets:
 	KUBECONFIG="${KUBECONFIG}" toolbox secrets \
 		--settings settings.yaml
-
-apps:
-	KUBECONFIG="${KUBECONFIG}" toolbox apps \
-		--path apps
 
 test:
 	cd test && CLOUDLAB_ENV=${env} go test
