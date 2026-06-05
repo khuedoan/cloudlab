@@ -23,7 +23,7 @@ spec:
         - name: ACTUAL_OPENID_CLIENT_SECRET
           value: vault:secret/data/actualbudget/auth#client_secret
         - name: ACTUAL_OPENID_SERVER_HOSTNAME
-          value: https://budget.production.khuedoan.com
+          value: https://budget.khuedoan.com
         - name: ACTUAL_USER_CREATION_MODE
           value: login
         image: docker.io/actualbudget/actual-server:latest-alpine
