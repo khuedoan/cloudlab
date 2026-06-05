@@ -7,6 +7,9 @@ makes existing repositories unreadable.
 
 ## Setup
 
+Backup buckets are managed externally (either using Terraform or created manually),
+this is intentional to prevent human error from accidentally deleting the buckets (e.g., with `terragrunt destroy`).
+
 Publish platform resources and secrets first:
 
 ```sh
