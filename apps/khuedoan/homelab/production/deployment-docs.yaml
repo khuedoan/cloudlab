@@ -13,7 +13,7 @@ spec:
         istio.io/dataplane-mode: ambient
     spec:
       containers:
-      - image: registry.registry.svc.cluster.local/khuedoan/homelab:2392e1ab46dfee3bc5ef200bea5b2d44ad7b0be9
+      - image: registry.registry.svc.cluster.local/khuedoan/homelab:af374350e163734ba34f641a55ec413cd5e05e45
         name: docs
         ports:
         - containerPort: 80
