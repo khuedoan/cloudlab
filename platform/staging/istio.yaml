@@ -112,6 +112,100 @@ spec:
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
+  name: istio-metrics
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: istiod
+    - name: prometheus
+  releaseName: istio-metrics
+  targetNamespace: istio-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      component-monitor:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        forceRename: istio-component-monitor
+        spec:
+          spec:
+            jobLabel: istio
+            targetLabels:
+              - app
+            selector:
+              matchExpressions:
+                - key: istio
+                  operator: In
+                  values:
+                    - pilot
+            namespaceSelector:
+              any: true
+            endpoints:
+              - port: http-monitoring
+                interval: 15s
+      envoy-stats-monitor:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PodMonitor
+        forceRename: istio-envoy-stats
+        spec:
+          spec:
+            selector:
+              matchExpressions:
+                - key: istio-prometheus-ignore
+                  operator: DoesNotExist
+            namespaceSelector:
+              any: true
+            jobLabel: envoy-stats
+            podMetricsEndpoints:
+              - path: /stats/prometheus
+                interval: 15s
+                relabelings:
+                  - action: keep
+                    sourceLabels:
+                      - __meta_kubernetes_pod_container_name
+                    regex: istio-proxy
+                  - action: keep
+                    sourceLabels:
+                      - __meta_kubernetes_pod_annotationpresent_prometheus_io_scrape
+                  - action: replace
+                    regex: '(\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})'
+                    replacement: '[$2]:$1'
+                    sourceLabels:
+                      - __meta_kubernetes_pod_annotation_prometheus_io_port
+                      - __meta_kubernetes_pod_ip
+                    targetLabel: __address__
+                  - action: replace
+                    regex: '(\d+);((([0-9]+?)(\.|$)){4})'
+                    replacement: $2:$1
+                    sourceLabels:
+                      - __meta_kubernetes_pod_annotation_prometheus_io_port
+                      - __meta_kubernetes_pod_ip
+                    targetLabel: __address__
+                  - action: labeldrop
+                    regex: __meta_kubernetes_pod_label_(.+)
+                  - action: replace
+                    sourceLabels:
+                      - __meta_kubernetes_namespace
+                    targetLabel: namespace
+                  - action: replace
+                    sourceLabels:
+                      - __meta_kubernetes_pod_name
+                    targetLabel: pod
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
   name: istio-gateway
   namespace: flux-system
 spec:
