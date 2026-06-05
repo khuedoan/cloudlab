@@ -17,7 +17,7 @@ spec:
       - envFrom:
         - secretRef:
             name: example
-        image: registry.registry.svc.cluster.local/test/example:918c5ba6a6586c6f8fb88f7a880e7ea2c97e6121
+        image: registry.registry.svc.cluster.local/test/example:72fab207aa1418a63bb04e3093a884ee27b7b82e
         name: example
         ports:
         - containerPort: 8080
