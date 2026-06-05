@@ -85,7 +85,7 @@ spec:
               NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
               NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
               NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service
               GITOPS_REPO: khuedoan/cloudlab
               GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
               GITOPS_REVISION: master
