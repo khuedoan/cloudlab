@@ -38,12 +38,15 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
+              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
               pullPolicy: Always
             command:
               - /usr/local/bin/server
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              TEMPORAL_WEB_URL: https://temporal.production.khuedoan.com
+              TEMPORAL_NAMESPACE: default
+              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
               NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service=test/example
@@ -69,7 +72,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
+              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -115,7 +118,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
+              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
@@ -126,6 +129,9 @@ spec:
               GIT_EMAIL: bot@cloudlab.khuedoan.com
               GIT_USERNAME: Bot
               GIT_PASSWORD: vault:secret/data/netamos/forgejo#password
+              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
+              FORGEJO_ADMIN_USERNAME: forgejo_admin
+              FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
           docker:
             image:
               repository: docker.io/library/docker
