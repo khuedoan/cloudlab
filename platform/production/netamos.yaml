@@ -38,7 +38,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
+              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
               pullPolicy: Always
             command:
               - /usr/local/bin/server
@@ -69,7 +69,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
+              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -115,7 +115,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 5320d02ad25f3f62c302f8dcced51bb52f6306b3
+              tag: 2555ada5b8283f26d8486eec581727f971ef4fd2
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
