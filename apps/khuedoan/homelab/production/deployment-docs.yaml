@@ -13,14 +13,14 @@ spec:
         istio.io/dataplane-mode: ambient
     spec:
       containers:
-        - image: registry.registry.svc.cluster.local/khuedoan/homelab:b7d8037fa8769615d284fc0adc118ee2b4625266
-          name: docs
-          ports:
-            - containerPort: 80
-              name: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 3
-            periodSeconds: 3
+      - image: registry.registry.svc.cluster.local/khuedoan/homelab:2392e1ab46dfee3bc5ef200bea5b2d44ad7b0be9
+        name: docs
+        ports:
+        - containerPort: 80
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 3
