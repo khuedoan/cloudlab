@@ -37,8 +37,8 @@ spec:
           app:
             image:
               # TODO switch to netamos
-              repository: docker.io/khuedoan/platform-engine
-              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+              tag: 8c9201a03c198a4de6239669cdbee03279664400
               pullPolicy: Always
             command:
               - /usr/local/bin/server
@@ -46,7 +46,6 @@ spec:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
-              APP_CLUSTER: production
               REGISTRY: registry.registry.svc.cluster.local
       bootstrap:
         labels:
@@ -68,8 +67,8 @@ spec:
           app:
             image:
               # TODO switch to netamos
-              repository: docker.io/khuedoan/platform-engine
-              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+              tag: 8c9201a03c198a4de6239669cdbee03279664400
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -114,8 +113,8 @@ spec:
           app:
             image:
               # TODO switch to netamos
-              repository: docker.io/khuedoan/platform-engine
-              tag: 64e18f52d33e9bafa68a4c57696cf2f99f769a00
+              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
+              tag: 8c9201a03c198a4de6239669cdbee03279664400
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
