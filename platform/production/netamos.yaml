@@ -38,7 +38,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
+              tag: 951bad7e13fb9b6fb872cb8a896afa4bee7e2c37
               pullPolicy: Always
             command:
               - /usr/local/bin/server
@@ -49,7 +49,7 @@ spec:
               FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service=test/example
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/homelab,khuedoan/example-service=test/example
               REGISTRY: registry.registry.svc.cluster.local
       bootstrap:
         labels:
@@ -72,7 +72,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
+              tag: 951bad7e13fb9b6fb872cb8a896afa4bee7e2c37
               pullPolicy: Always
             command:
               - /usr/local/bin/worker
@@ -89,7 +89,7 @@ spec:
               NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
               NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
               NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
-              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/example-service=test/example
+              NETAMOS_WEBHOOK_REPOS: khuedoan/blog,khuedoan/homelab,khuedoan/example-service=test/example
               GITOPS_REPO: khuedoan/cloudlab
               GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
               GITOPS_REVISION: master
@@ -118,7 +118,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 6ac933b8a5a60394c26ef092a3e7e1294995c605
+              tag: 951bad7e13fb9b6fb872cb8a896afa4bee7e2c37
               pullPolicy: Always
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233

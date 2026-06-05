@@ -84,12 +84,9 @@ func WriteBundle(outputDir, sourceDir, repository, tag string) (Bundle, error) {
 			return err
 		}
 
-		outputPath := filepath.Join(app.Dir, filepath.Base(relPath))
-		if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
-			return fmt.Errorf("create dir for %s: %w", outputPath, err)
-		}
-		if err := os.WriteFile(outputPath, data, 0o644); err != nil {
-			return fmt.Errorf("write %s: %w", outputPath, err)
+		manifest.SetNamespace(app.Name)
+		if err := writeManifest(filepath.Join(app.Dir, filepath.Base(relPath)), manifest.Object); err != nil {
+			return err
 		}
 
 		count++
@@ -286,6 +283,9 @@ func writeManifest(path string, manifest map[string]any) error {
 		return fmt.Errorf("marshal %s: %w", path, err)
 	}
 
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("create dir for %s: %w", path, err)
+	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
 	}

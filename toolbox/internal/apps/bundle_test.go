@@ -36,8 +36,8 @@ metadata:
 	if err != nil {
 		t.Fatalf("read copied manifest: %v", err)
 	}
-	if string(copied) != manifest {
-		t.Fatalf("copied manifest changed:\n%s", copied)
+	if !strings.Contains(string(copied), "namespace: khuedoan-blog-staging") {
+		t.Fatalf("copied manifest does not include generated namespace:\n%s", copied)
 	}
 
 	namespace := readFile(t, filepath.Join(app.Dir, "namespace.yaml"))

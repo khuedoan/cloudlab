@@ -13,46 +13,14 @@ spec:
         istio.io/dataplane-mode: ambient
     spec:
       containers:
-      - image: nginx:latest
-        name: nginx
-        ports:
-        - containerPort: 80
-          name: http
-        readinessProbe:
-          httpGet:
-            path: /
-            port: http
-          initialDelaySeconds: 3
-          periodSeconds: 3
-        volumeMounts:
-        - mountPath: /usr/share/nginx/html
-          name: static
-      - args:
-        - |
-          if [ ! -d .git ]; then
-            nix-shell -p git --command 'git clone https://github.com/khuedoan/homelab .'
-          fi
-
-          while true; do
-            nix-shell -p python311Packages.mkdocs-material --command 'mkdocs build'
-            cp -RT ./site /usr/share/nginx/html
-            sleep 120
-            nix-shell -p git --command 'git fetch origin'
-            nix-shell -p git --command 'git reset --hard origin/master'
-          done
-        command:
-        - /bin/sh
-        - -c
-        image: nixos/nix:latest
-        name: build
-        volumeMounts:
-        - mountPath: /usr/local/src
-          name: source
-        - mountPath: /usr/share/nginx/html
-          name: static
-        workingDir: /usr/local/src
-      volumes:
-      - emptyDir: {}
-        name: source
-      - emptyDir: {}
-        name: static
+        - image: registry.registry.svc.cluster.local/khuedoan/homelab:b7d8037fa8769615d284fc0adc118ee2b4625266
+          name: docs
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 3
