@@ -26,8 +26,24 @@ spec:
         kind: HelmRepository
         name: app-template
   values:
-    defaultPodOptions:
-      restartPolicy: Always
+    route:
+      netamos:
+        parentRefs:
+          - name: gateway
+            namespace: istio-system
+        hostnames:
+          - netamos.staging.khuedoan.com
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /api/v1
+              - path:
+                  type: PathPrefix
+                  value: /healthz
+            backendRefs:
+              - name: netamos
+                port: 8080
     controllers:
       server:
         labels:
@@ -38,8 +54,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: f074021da018f0d72ea1435c86b6988d98a1dfb0
-              pullPolicy: Always
+              tag: 5c4696b2ebb34f5337bdad9d4e4873bd29a8f0c5
             command:
               - /usr/local/bin/server
             env:
@@ -47,9 +62,13 @@ spec:
               TEMPORAL_WEB_URL: https://temporal.staging.khuedoan.com
               TEMPORAL_NAMESPACE: default
               FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
+              FORGEJO_PUBLIC_URL: https://code.staging.khuedoan.com
               GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
               GITOPS_REVISION: master
               REGISTRY: registry.registry.svc.cluster.local
+              OIDC_ISSUER: https://dex.staging.khuedoan.com
+              OIDC_CLIENT_ID: netamos-cli
+              OIDC_AUDIENCE: netamos-api
       bootstrap:
         labels:
           istio.io/dataplane-mode: ambient
@@ -71,8 +90,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: f074021da018f0d72ea1435c86b6988d98a1dfb0
-              pullPolicy: Always
+              tag: 5c4696b2ebb34f5337bdad9d4e4873bd29a8f0c5
             command:
               - /usr/local/bin/worker
             env:
@@ -117,8 +135,7 @@ spec:
             image:
               # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: f074021da018f0d72ea1435c86b6988d98a1dfb0
-              pullPolicy: Always
+              tag: 5c4696b2ebb34f5337bdad9d4e4873bd29a8f0c5
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
               REGISTRY: registry.registry.svc.cluster.local

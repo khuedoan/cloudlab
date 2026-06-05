@@ -93,6 +93,11 @@ spec:
         config:
           inCluster: true
       oauth2:
+        grantTypes:
+          - authorization_code
+          - refresh_token
+          - password
+          - urn:ietf:params:oauth:grant-type:device_code
         passwordConnector: local
         skipApprovalScreen: true
       enablePasswordDB: true
@@ -131,6 +136,14 @@ spec:
           redirectURIs:
             - "https://temporal.production.khuedoan.com/auth/sso/callback"
           secretEnv: TEMPORAL_CLIENT_SECRET
+        - id: netamos-cli
+          name: Netamos CLI
+          public: true
+        - id: netamos-api
+          name: Netamos API
+          public: true
+          trustedPeers:
+            - netamos-cli
     podAnnotations:
       istio.io/dataplane-mode: ambient
     resources:
