@@ -109,7 +109,7 @@ spec:
         - id: actualbudget
           name: Actual Budget
           redirectURIs:
-            - "https://budget.production.khuedoan.com/openid/callback"
+            - "https://budget.khuedoan.com/openid/callback"
           secretEnv: ACTUALBUDGET_CLIENT_SECRET
         - id: forgejo
           name: Forgejo
