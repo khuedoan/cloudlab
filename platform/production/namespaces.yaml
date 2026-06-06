@@ -33,6 +33,8 @@ spec:
         apiVersion: v1
         kind: Namespace
         forceRename: dex
+        labels:
+          istio.io/dataplane-mode: ambient
         spec: {}
       forgejo:
         apiVersion: v1
@@ -55,9 +57,13 @@ spec:
         apiVersion: v1
         kind: Namespace
         forceRename: temporal
+        labels:
+          istio.io/dataplane-mode: ambient
         spec: {}
       netamos:
         apiVersion: v1
         kind: Namespace
         forceRename: netamos
+        labels:
+          istio.io/dataplane-mode: ambient
         spec: {}

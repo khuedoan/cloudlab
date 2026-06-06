@@ -46,13 +46,9 @@ spec:
                 port: 8080
     controllers:
       server:
-        labels:
-          istio.io/dataplane-mode: ambient
-        strategy: RollingUpdate
         containers:
           app:
             image:
-              # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
               tag: c0f3055c4ca2a81e5e9dad20f2f66fe545600ef2
             command:
@@ -70,9 +66,6 @@ spec:
               OIDC_CLIENT_ID: netamos-cli
               OIDC_AUDIENCE: netamos-api
       bootstrap:
-        labels:
-          istio.io/dataplane-mode: ambient
-        strategy: RollingUpdate
         pod:
           annotations:
             vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
@@ -88,7 +81,6 @@ spec:
         containers:
           app:
             image:
-              # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
               tag: c0f3055c4ca2a81e5e9dad20f2f66fe545600ef2
             command:
@@ -111,9 +103,6 @@ spec:
               GITOPS_REVISION: master
               REGISTRY: registry.registry.svc.cluster.local
       worker:
-        labels:
-          istio.io/dataplane-mode: ambient
-        strategy: RollingUpdate
         pod:
           hostNetwork: true # TODO ???
           annotations:
@@ -133,7 +122,6 @@ spec:
         containers:
           app:
             image:
-              # TODO switch to netamos
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
               tag: c0f3055c4ca2a81e5e9dad20f2f66fe545600ef2
             env:

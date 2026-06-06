@@ -45,9 +45,9 @@ spec:
           vault.security.banzaicloud.io/vault-path: kubernetes
         spec:
           stringData:
-            # Keep Vault resolution on the Secret object. Inline vault: env values
-            # make Dex depend on pod mutation, and that path breaks here because
-            # the webhook cannot use the K3s image mirror config for registry lookups.
+            # Resolve Vault placeholders on the Secret object. Inline vault:
+            # env values make Dex depend on pod mutation, which breaks because
+            # the webhook cannot use the K3s registry mirror.
             ADMIN_PASSWORD_HASH: vault:secret/data/dex/auth#ADMIN_PASSWORD_HASH
             KHUEDOAN_PASSWORD_HASH: vault:secret/data/dex/auth#KHUEDOAN_PASSWORD_HASH
             ACTUALBUDGET_CLIENT_SECRET: vault:secret/data/actualbudget/auth#client_secret
@@ -96,9 +96,7 @@ spec:
         grantTypes:
           - authorization_code
           - refresh_token
-          - password
           - urn:ietf:params:oauth:grant-type:device_code
-        passwordConnector: local
         skipApprovalScreen: true
       enablePasswordDB: true
       staticPasswords:
@@ -144,8 +142,6 @@ spec:
           public: true
           trustedPeers:
             - netamos-cli
-    podAnnotations:
-      istio.io/dataplane-mode: ambient
     resources:
       requests:
         cpu: 50m
@@ -178,23 +174,19 @@ spec:
         kind: HelmRepository
         name: app-template
   values:
-    rawResources:
-      dex-route:
-        apiVersion: gateway.networking.k8s.io/v1
-        kind: HTTPRoute
+    route:
+      dex:
         forceRename: dex
-        spec:
-          spec:
-            parentRefs:
-              - name: gateway
-                namespace: istio-system
-            hostnames:
-              - dex.production.khuedoan.com
-            rules:
-              - matches:
-                  - path:
-                      type: PathPrefix
-                      value: /
-                backendRefs:
-                  - name: dex
-                    port: 5556
+        parentRefs:
+          - name: gateway
+            namespace: istio-system
+        hostnames:
+          - dex.production.khuedoan.com
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+            backendRefs:
+              - name: dex
+                port: 5556
