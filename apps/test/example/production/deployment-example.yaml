@@ -16,7 +16,7 @@ spec:
       - envFrom:
         - secretRef:
             name: example
-        image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:828c31f942e8913ab2af53a2841c180586c5b7e1
+        image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:57400e1ccfccb4455f113d91c0aacc9172fffc7c
         name: example
         ports:
         - containerPort: 8080
