@@ -10,7 +10,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: docs
-        istio.io/dataplane-mode: ambient
     spec:
       containers:
         - image: registry.registry.svc.cluster.local/apps/khuedoan/homelab:af374350e163734ba34f641a55ec413cd5e05e45

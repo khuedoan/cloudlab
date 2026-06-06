@@ -11,7 +11,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: example
-        istio.io/dataplane-mode: ambient
     spec:
       containers:
       - envFrom:

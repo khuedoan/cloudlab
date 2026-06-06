@@ -10,7 +10,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: actualbudget
-        istio.io/dataplane-mode: ambient
     spec:
       containers:
       - env:

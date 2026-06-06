@@ -11,7 +11,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: blog
-        istio.io/dataplane-mode: ambient
     spec:
       containers:
         - image: registry.registry.svc.cluster.local/apps/khuedoan/blog:b1e6bb730ce8193e10a6981d59e509132cfaa749
