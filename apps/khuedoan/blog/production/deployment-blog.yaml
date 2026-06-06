@@ -13,8 +13,8 @@ spec:
         app.kubernetes.io/name: blog
     spec:
       containers:
-        - image: registry.registry.svc.cluster.local/apps/khuedoan/blog:b1e6bb730ce8193e10a6981d59e509132cfaa749
-          name: blog
-          ports:
-            - containerPort: 3000
-              name: http
+      - image: registry.registry.svc.cluster.local/apps/khuedoan/blog:3186aa0cc22649ce1dd897f80c1ac10e50d7e3af
+        name: blog
+        ports:
+        - containerPort: 3000
+          name: http
