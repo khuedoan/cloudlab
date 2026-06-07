@@ -50,7 +50,7 @@ spec:
           app:
             image:
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 3b3c29f65a685849284797351a41901b13e0b507
+              tag: 54ce4f82c0a188e7788a5e8177662ec1999315fe
             command:
               - /usr/local/bin/server
             env:
@@ -82,7 +82,7 @@ spec:
           app:
             image:
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 3b3c29f65a685849284797351a41901b13e0b507
+              tag: 54ce4f82c0a188e7788a5e8177662ec1999315fe
             command:
               - /usr/local/bin/worker
             env:
@@ -123,7 +123,7 @@ spec:
           app:
             image:
               repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 3b3c29f65a685849284797351a41901b13e0b507
+              tag: 54ce4f82c0a188e7788a5e8177662ec1999315fe
             env:
               TEMPORAL_URL: http://temporal-frontend.temporal:7233
               REGISTRY: registry.registry.svc.cluster.local
