@@ -13,7 +13,7 @@ spec:
         app.kubernetes.io/name: hn4e
     spec:
       containers:
-      - image: registry.registry.svc.cluster.local/apps/khuedoan/hn4e:b48fdc07b56d91a073d89b7b76cd88053e6bfc11
+      - image: registry.registry.svc.cluster.local/apps/khuedoan/hn4e:ba120ddc5f6197b08087e0159b5ddbf66d1bce61
         name: hn4e
         ports:
         - containerPort: 3001
