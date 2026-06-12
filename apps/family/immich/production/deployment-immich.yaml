@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: immich
+    spec:
+      containers:
+      - image: registry.registry.svc.cluster.local/vendor/images/immich-app/immich-server:v2.6.3
+        name: immich
+        ports:
+        - containerPort: 2283
+          name: http
+        volumeMounts:
+        - mountPath: /data
+          name: immich
+      volumes:
+      - name: immich
+        persistentVolumeClaim:
+          claimName: immich
