@@ -163,3 +163,8 @@ vendors:
     source: ghcr.io/dexidp/dex
     versions:
       - v2.43.1
+  vendor/images/immich-app/immich-server:
+    kind: image
+    source: ghcr.io/immich-app/immich-server
+    versions:
+      - v2.6.3
