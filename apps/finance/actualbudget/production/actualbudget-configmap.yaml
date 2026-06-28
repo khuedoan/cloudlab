@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: actualbudget
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: actualbudget
+    app.kubernetes.io/managed-by: netamos
+    app.kubernetes.io/name: actualbudget
+data:
+  ACTUAL_LOGIN_METHOD: openid
+  ACTUAL_OPENID_DISCOVERY_URL: https://dex.production.khuedoan.com/.well-known/openid-configuration
+  ACTUAL_OPENID_CLIENT_ID: actualbudget
+  ACTUAL_OPENID_SERVER_HOSTNAME: https://budget.khuedoan.com
+  ACTUAL_USER_CREATION_MODE: login

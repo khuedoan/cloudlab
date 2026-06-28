@@ -2,6 +2,11 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: docs
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: docs
+    app.kubernetes.io/managed-by: netamos
+    app.kubernetes.io/name: docs
 spec:
   hostnames:
   - homelab.khuedoan.com
@@ -15,7 +20,3 @@ spec:
   - backendRefs:
     - name: docs
       port: 80
-    matches:
-    - path:
-        type: PathPrefix
-        value: /

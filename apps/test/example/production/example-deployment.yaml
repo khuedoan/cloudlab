@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example
+  annotations:
+    netamos.com/branch: master
+    netamos.com/repository: khuedoan/example-service
+    netamos.com/source: git
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: example
+    app.kubernetes.io/managed-by: netamos
+    app.kubernetes.io/name: example
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: example
+  template:
+    metadata:
+      annotations:
+        netamos.com/branch: master
+        netamos.com/repository: khuedoan/example-service
+        netamos.com/source: git
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/instance: example
+        app.kubernetes.io/managed-by: netamos
+        app.kubernetes.io/name: example
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: example
+        image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:f2a2b741a9509751f94deafe7349af3acaf50d78
+        name: example
+        ports:
+        - containerPort: 8080
+          name: http

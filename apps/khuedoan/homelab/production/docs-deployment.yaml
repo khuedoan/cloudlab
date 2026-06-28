@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs
+  annotations:
+    netamos.com/image: registry.registry.svc.cluster.local/apps/khuedoan/homelab:606a2557fb7b20630cf4a3c817c33f4ee8048d49
+    netamos.com/source: image
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: docs
+    app.kubernetes.io/managed-by: netamos
+    app.kubernetes.io/name: docs
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: docs
+  template:
+    metadata:
+      annotations:
+        netamos.com/image: registry.registry.svc.cluster.local/apps/khuedoan/homelab:606a2557fb7b20630cf4a3c817c33f4ee8048d49
+        netamos.com/source: image
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/instance: docs
+        app.kubernetes.io/managed-by: netamos
+        app.kubernetes.io/name: docs
+    spec:
+      containers:
+      - image: registry.registry.svc.cluster.local/apps/khuedoan/homelab:606a2557fb7b20630cf4a3c817c33f4ee8048d49
+        name: docs
+        ports:
+        - containerPort: 80
+          name: http

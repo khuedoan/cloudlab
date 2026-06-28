@@ -2,6 +2,11 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: blog
+  labels:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: blog
+    app.kubernetes.io/managed-by: netamos
+    app.kubernetes.io/name: blog
 spec:
   hostnames:
   - www.khuedoan.com
@@ -15,7 +20,3 @@ spec:
   - backendRefs:
     - name: blog
       port: 3000
-    matches:
-    - path:
-        type: PathPrefix
-        value: /
