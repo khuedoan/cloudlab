@@ -24,6 +24,16 @@ secrets:
   secret/netamos/forgejo:
     password:
       type: random
+  secret/netamos/webhook:
+    secret:
+      type: random
+  secret/netamos/oauth:
+    client_secret:
+      type: random
+  secret/netamos/cookie:
+    key:
+      type: random
+      length: 64
   secret/grafana/oauth:
     client_secret:
       type: random

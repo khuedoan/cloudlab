@@ -37,71 +37,46 @@ spec:
           - matches:
               - path:
                   type: PathPrefix
-                  value: /api/v1
-              - path:
-                  type: PathPrefix
-                  value: /healthz
+                  value: /
             backendRefs:
               - name: netamos
                 port: 8080
     controllers:
       server:
-        containers:
-          app:
-            image:
-              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 14340a0ed6962b4ebb05b8ebb61be964882c170b
-            command:
-              - /usr/local/bin/server
-            env:
-              TEMPORAL_URL: http://temporal-frontend.temporal:7233
-              TEMPORAL_WEB_URL: https://temporal.staging.khuedoan.com
-              TEMPORAL_NAMESPACE: default
-              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
-              FORGEJO_PUBLIC_URL: https://code.staging.khuedoan.com
-              GITOPS_URL: http://forgejo-http.forgejo.svc.cluster.local:3000/khuedoan/cloudlab
-              GITOPS_REVISION: master
-              REGISTRY: registry.registry.svc.cluster.local
-              OIDC_ISSUER: https://dex.staging.khuedoan.com
-              OIDC_CLIENT_ID: netamos-cli
-              OIDC_AUDIENCE: netamos-api
-      bootstrap:
         pod:
           annotations:
             vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
             vault.security.banzaicloud.io/vault-role: default
             vault.security.banzaicloud.io/vault-path: kubernetes
-          hostAliases:
-            - ip: 2a01:4f8:c010:d56::2
-              hostnames:
-                - github.com
-            - ip: 2a01:4f8:c010:d56::4
-              hostnames:
-                - codeload.github.com
         containers:
           app:
             image:
-              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 14340a0ed6962b4ebb05b8ebb61be964882c170b
+              repository: docker.io/khuedoan/netamos
+              tag: 173a8b4bc64c6c7d6079f05de3ffb8d6bf1ad8e5
             command:
-              - /usr/local/bin/worker
+              - /usr/local/bin/server
             env:
-              TEMPORAL_URL: http://temporal-frontend.temporal:7233
-              TASK_QUEUE: bootstrap
-              FORGEJO_BOOTSTRAP: "true"
-              FORGEJO_BOOTSTRAP_INTERVAL_SECONDS: "86400"
-              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
-              FORGEJO_ADMIN_USERNAME: forgejo_admin
-              FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
-              NETAMOS_USERNAME: Bot
-              NETAMOS_EMAIL: bot@cloudlab.khuedoan.com
-              NETAMOS_PASSWORD: vault:secret/data/netamos/forgejo#password
-              NETAMOS_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/gitea
-              NETAMOS_WEBHOOK_LEGACY_URL: http://netamos.netamos.svc.cluster.local:8080
-              GITOPS_REPO: khuedoan/cloudlab
-              GITOPS_SOURCE_URL: https://github.com/khuedoan/cloudlab
-              GITOPS_REVISION: master
-              REGISTRY: registry.registry.svc.cluster.local
+              NETAMOS_TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              NETAMOS_TEMPORAL_NAMESPACE: default
+              NETAMOS_FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
+              NETAMOS_FORGEJO_ADMIN_USERNAME: forgejo_admin
+              NETAMOS_FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
+              NETAMOS_FORGEJO_USERNAME: Bot
+              NETAMOS_FORGEJO_PASSWORD: vault:secret/data/netamos/forgejo#password
+              NETAMOS_REGISTRY: registry.registry.svc.cluster.local
+              NETAMOS_GITOPS_OWNER: khuedoan
+              NETAMOS_GITOPS_REPO: cloudlab
+              NETAMOS_GITOPS_BRANCH: master
+              NETAMOS_GITOPS_AUTHOR_NAME: Bot
+              NETAMOS_GITOPS_AUTHOR_EMAIL: bot@cloudlab.khuedoan.com
+              NETAMOS_WEBHOOK_SECRET: vault:secret/data/netamos/webhook#secret
+              NETAMOS_BOOTSTRAP_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/forgejo
+              NETAMOS_AUTH_ISSUER_URL: https://dex.staging.khuedoan.com
+              NETAMOS_AUTH_CLIENT_ID: netamos
+              NETAMOS_AUTH_CLIENT_SECRET: vault:secret/data/netamos/oauth#client_secret
+              NETAMOS_AUTH_REDIRECT_URL: https://netamos.staging.khuedoan.com/auth/callback
+              NETAMOS_AUTH_COOKIE_KEY: vault:secret/data/netamos/cookie#key
+              NETAMOS_AUTH_COOKIE_SECURE: "true"
       worker:
         pod:
           hostNetwork: true # TODO ???
@@ -122,20 +97,24 @@ spec:
         containers:
           app:
             image:
-              repository: registry.registry.svc.cluster.local/khuedoan/platform-engine
-              tag: 14340a0ed6962b4ebb05b8ebb61be964882c170b
+              repository: docker.io/khuedoan/netamos
+              tag: 173a8b4bc64c6c7d6079f05de3ffb8d6bf1ad8e5
+            command:
+              - /usr/local/bin/worker
             env:
-              TEMPORAL_URL: http://temporal-frontend.temporal:7233
-              REGISTRY: registry.registry.svc.cluster.local
+              NETAMOS_TEMPORAL_URL: http://temporal-frontend.temporal:7233
+              NETAMOS_TEMPORAL_NAMESPACE: default
+              NETAMOS_FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
+              NETAMOS_FORGEJO_USERNAME: Bot
+              NETAMOS_FORGEJO_PASSWORD: vault:secret/data/netamos/forgejo#password
+              NETAMOS_REGISTRY: registry.registry.svc.cluster.local
+              NETAMOS_GITOPS_OWNER: khuedoan
+              NETAMOS_GITOPS_REPO: cloudlab
+              NETAMOS_GITOPS_BRANCH: master
+              NETAMOS_GITOPS_AUTHOR_NAME: Bot
+              NETAMOS_GITOPS_AUTHOR_EMAIL: bot@cloudlab.khuedoan.com
               DOCKER_BUILD_NETWORK: host
               DOCKER_BUILD_ADD_HOSTS: github.com:2a01:4f8:c010:d56::2,codeload.github.com:2a01:4f8:c010:d56::4
-              GIT_USER: Bot
-              GIT_EMAIL: bot@cloudlab.khuedoan.com
-              GIT_USERNAME: Bot
-              GIT_PASSWORD: vault:secret/data/netamos/forgejo#password
-              FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
-              FORGEJO_ADMIN_USERNAME: forgejo_admin
-              FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
           docker:
             image:
               repository: docker.io/library/docker
