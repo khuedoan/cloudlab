@@ -52,7 +52,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: 173a8b4bc64c6c7d6079f05de3ffb8d6bf1ad8e5
+              tag: 79b454e4578df0186d41bb242398d8605187cf4217ecde1f4ff19c19840cc234
             command:
               - /usr/local/bin/server
             env:
@@ -98,7 +98,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: 173a8b4bc64c6c7d6079f05de3ffb8d6bf1ad8e5
+              tag: 79b454e4578df0186d41bb242398d8605187cf4217ecde1f4ff19c19840cc234
             command:
               - /usr/local/bin/worker
             env:
@@ -107,12 +107,16 @@ spec:
               NETAMOS_FORGEJO_URL: http://forgejo-http.forgejo.svc.cluster.local:3000
               NETAMOS_FORGEJO_USERNAME: Bot
               NETAMOS_FORGEJO_PASSWORD: vault:secret/data/netamos/forgejo#password
+              NETAMOS_FORGEJO_ADMIN_USERNAME: forgejo_admin
+              NETAMOS_FORGEJO_ADMIN_PASSWORD: vault:secret/data/forgejo/admin#password
               NETAMOS_REGISTRY: registry.registry.svc.cluster.local
               NETAMOS_GITOPS_OWNER: khuedoan
               NETAMOS_GITOPS_REPO: cloudlab
               NETAMOS_GITOPS_BRANCH: master
               NETAMOS_GITOPS_AUTHOR_NAME: Bot
               NETAMOS_GITOPS_AUTHOR_EMAIL: bot@cloudlab.khuedoan.com
+              NETAMOS_WEBHOOK_SECRET: vault:secret/data/netamos/webhook#secret
+              NETAMOS_BOOTSTRAP_WEBHOOK_URL: http://netamos.netamos.svc.cluster.local:8080/webhooks/forgejo
               DOCKER_BUILD_NETWORK: host
               DOCKER_BUILD_ADD_HOSTS: github.com:2a01:4f8:c010:d56::2,codeload.github.com:2a01:4f8:c010:d56::4
           docker:
