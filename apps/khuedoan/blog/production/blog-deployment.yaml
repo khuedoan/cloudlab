@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: blog
   annotations:
     netamos.com/branch: master
     netamos.com/repository: khuedoan/blog
@@ -11,8 +10,9 @@ metadata:
     app.kubernetes.io/instance: blog
     app.kubernetes.io/managed-by: netamos
     app.kubernetes.io/name: blog
+  name: blog
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app.kubernetes.io/instance: blog
