@@ -52,7 +52,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: 79b454e4578df0186d41bb242398d8605187cf4217ecde1f4ff19c19840cc234
+              tag: 96922fd51e2317c341f559057bb627eef370e304
             command:
               - /usr/local/bin/server
             env:
@@ -98,7 +98,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: 79b454e4578df0186d41bb242398d8605187cf4217ecde1f4ff19c19840cc234
+              tag: 96922fd51e2317c341f559057bb627eef370e304
             command:
               - /usr/local/bin/worker
             env:
