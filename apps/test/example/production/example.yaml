@@ -1,0 +1,18 @@
+apiVersion: apps.netamos.com/v1alpha1
+kind: Application
+metadata:
+  name: example
+spec:
+  source:
+    kind: git
+    repository: khuedoan/example-service
+    branch: master
+  image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:f2a2b741a9509751f94deafe7349af3acaf50d78
+  replicas: 2
+  port: 8080
+  domains:
+    - example.production.khuedoan.com
+  env:
+    - key: EXAMPLE_SECRET
+      value: vault:secret/data/test/example#MOCK_API_KEY
+      source: Secret
