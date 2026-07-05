@@ -1,0 +1,19 @@
+apiVersion: apps.netamos.com/v1alpha1
+kind: Application
+metadata:
+  name: server
+spec:
+  source:
+    kind: git
+    repository: khuedoan/example-service
+    branch: master
+  image: ''
+  replicas: 3
+  port: 8009
+  domains:
+  - amazingshit.production.khuedoan.com
+  env:
+  - key: PORT
+    value: '8009'
+  volume: null
+  files: []
