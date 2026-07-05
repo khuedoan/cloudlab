@@ -7,7 +7,7 @@ spec:
     kind: git
     repository: khuedoan/example-service
     branch: master
-  image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:5c13e807211df5de1a283c68c427f765b8c5f14c
+  image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:a9204b4b4c6875a81731745e43c4d76df987f6cd
   replicas: 3
   port: 8009
   domains:
