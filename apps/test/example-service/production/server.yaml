@@ -8,7 +8,7 @@ spec:
     repository: khuedoan/example-service
     branch: master
   image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:a9204b4b4c6875a81731745e43c4d76df987f6cd
-  replicas: 3
+  replicas: 1
   port: 8009
   domains:
   - amazingshit.production.khuedoan.com
