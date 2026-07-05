@@ -7,12 +7,13 @@ spec:
     kind: git
     repository: khuedoan/example-service
     branch: master
-  image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:f2a2b741a9509751f94deafe7349af3acaf50d78
+  image: registry.registry.svc.cluster.local/apps/khuedoan/example-service:5c13e807211df5de1a283c68c427f765b8c5f14c
   replicas: 2
   port: 8080
   domains:
-    - example.production.khuedoan.com
+  - example.production.khuedoan.com
   env:
-    - key: EXAMPLE_SECRET
-      value: vault:secret/data/test/example#MOCK_API_KEY
-      source: Secret
+  - key: EXAMPLE_SECRET
+    value: vault:secret/data/test/example#MOCK_API_KEY
+  volume: null
+  files: []
