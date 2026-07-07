@@ -6,7 +6,11 @@ spec:
   source:
     kind: image
   image: registry.registry.svc.cluster.local/apps/khuedoan/homelab:606a2557fb7b20630cf4a3c817c33f4ee8048d49
+  replicas: 2
   port: 80
   domains:
-    - homelab.khuedoan.com
-    - homelab.production.khuedoan.com
+  - homelab.khuedoan.com
+  - homelab.production.khuedoan.com
+  env: []
+  volume: null
+  files: []
