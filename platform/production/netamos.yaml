@@ -32,7 +32,6 @@ spec:
           - name: gateway
             namespace: istio-system
         hostnames:
-          - netamos.production.khuedoan.com
           - netamos.khuedoan.com
         rules:
           - matches:
@@ -53,7 +52,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: da80426de520eac53522591167403f9dabcdd854
+              tag: 3d132142c30caef327bc24a914dd78a20f5de8ec
             command:
               - /usr/local/bin/server
             env:
@@ -75,7 +74,7 @@ spec:
               NETAMOS_AUTH_ISSUER_URL: https://dex.production.khuedoan.com
               NETAMOS_AUTH_CLIENT_ID: netamos
               NETAMOS_AUTH_CLIENT_SECRET: vault:secret/data/netamos/oauth#client_secret
-              NETAMOS_AUTH_REDIRECT_URL: https://netamos.production.khuedoan.com/auth/callback
+              NETAMOS_AUTH_REDIRECT_URL: https://netamos.khuedoan.com/auth/callback
               NETAMOS_AUTH_COOKIE_KEY: vault:secret/data/netamos/cookie#key
               NETAMOS_AUTH_COOKIE_SECURE: "true"
       worker:
@@ -99,7 +98,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: da80426de520eac53522591167403f9dabcdd854
+              tag: 3d132142c30caef327bc24a914dd78a20f5de8ec
             command:
               - /usr/local/bin/worker
             env:

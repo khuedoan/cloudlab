@@ -134,7 +134,7 @@ spec:
         - id: netamos
           name: Netamos
           redirectURIs:
-            - "https://netamos.production.khuedoan.com/auth/callback"
+            - "https://netamos.khuedoan.com/auth/callback"
           secretEnv: NETAMOS_CLIENT_SECRET
     resources:
       requests:
