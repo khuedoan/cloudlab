@@ -1,11 +1,11 @@
-apiVersion: apps.netamos.com/v1alpha1
+apiVersion: apps.netamos.com/v1alpha2
 kind: Application
 metadata:
   name: hn4e
 spec:
   source:
     kind: image
-  image: registry.registry.svc.cluster.local/apps/khuedoan/hn4e:1df645dc68d69bc130bfb39b5e2079b896457053
+    reference: registry.registry.svc.cluster.local/apps/khuedoan/hn4e:1df645dc68d69bc130bfb39b5e2079b896457053
   port: 3001
   domains:
     - hn4e.khuedoan.com

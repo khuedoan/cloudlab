@@ -1,4 +1,4 @@
-apiVersion: apps.netamos.com/v1alpha1
+apiVersion: apps.netamos.com/v1alpha2
 kind: Application
 metadata:
   name: blog
@@ -7,12 +7,9 @@ spec:
     kind: git
     repository: khuedoan/blog
     branch: master
-  image: registry.registry.svc.cluster.local/apps/khuedoan/blog:3186aa0cc22649ce1dd897f80c1ac10e50d7e3af
+  resolvedImage: registry.registry.svc.cluster.local/apps/khuedoan/blog:3186aa0cc22649ce1dd897f80c1ac10e50d7e3af
   replicas: 2
   port: 3000
   domains:
   - www.khuedoan.com
   - www.production.khuedoan.com
-  env: []
-  volume: null
-  files: []
