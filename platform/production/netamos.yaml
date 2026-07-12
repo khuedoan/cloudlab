@@ -33,6 +33,7 @@ spec:
             namespace: istio-system
         hostnames:
           - netamos.production.khuedoan.com
+          - netamos.khuedoan.com
         rules:
           - matches:
               - path:
@@ -52,7 +53,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: ddb0b9241fc2b21319d0bd68d8ef50dd8b121c37
+              tag: da80426de520eac53522591167403f9dabcdd854
             command:
               - /usr/local/bin/server
             env:
@@ -98,7 +99,7 @@ spec:
           app:
             image:
               repository: docker.io/khuedoan/netamos
-              tag: ddb0b9241fc2b21319d0bd68d8ef50dd8b121c37
+              tag: da80426de520eac53522591167403f9dabcdd854
             command:
               - /usr/local/bin/worker
             env:
