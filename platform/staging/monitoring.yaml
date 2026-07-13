@@ -275,6 +275,7 @@ spec:
         spec:
           stringData:
             SSO_CLIENT_SECRET: vault:secret/data/grafana/oauth#client_secret
+            CLICKHOUSE_PASSWORD: vault:secret/data/clickhouse/credentials#grafana_password
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -301,6 +302,31 @@ spec:
     remediation:
       retries: -1
   values:
+    plugins:
+      - grafana-clickhouse-datasource@4.19.0
+    datasources:
+      clickhouse.yaml:
+        apiVersion: 1
+        datasources:
+          - name: ClickHouse
+            type: grafana-clickhouse-datasource
+            access: proxy
+            jsonData:
+              defaultDatabase: default
+              host: clickhouse-clickhouse-headless.monitoring.svc.cluster.local
+              port: 9000
+              protocol: native
+              username: grafana
+              logs:
+                defaultDatabase: default
+                defaultTable: otel_logs
+                otelEnabled: true
+              traces:
+                defaultDatabase: default
+                defaultTable: otel_traces
+                otelEnabled: true
+            secureJsonData:
+              password: $CLICKHOUSE_PASSWORD
     testFramework:
       enabled: false
     sidecar:

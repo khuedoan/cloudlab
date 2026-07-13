@@ -1,0 +1,493 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: clickhouse-operator
+  namespace: flux-system
+spec:
+  type: oci
+  insecure: true
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local/vendor/charts/clickhouse-operator
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: opentelemetry
+  namespace: flux-system
+spec:
+  type: oci
+  insecure: true
+  interval: 1h
+  url: oci://registry.registry.svc.cluster.local/vendor/charts/opentelemetry-collector
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: clickhouse-operator
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: cert-manager
+    - name: platform-namespaces
+  releaseName: clickhouse-operator
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: clickhouse-operator-helm
+      version: 0.0.6
+      sourceRef:
+        kind: HelmRepository
+        name: clickhouse-operator
+  values:
+    fullnameOverride: clickhouse-operator
+    controller:
+      watchNamespaces:
+        - monitoring
+    manager:
+      image:
+        repository: registry.registry.svc.cluster.local/vendor/images/clickhouse/clickhouse-operator
+        tag: v0.0.6
+    metrics:
+      enabled: false
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: clickhouse
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: clickhouse-operator
+    - name: vault
+    - name: vault-secrets-webhook
+  releaseName: clickhouse
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: app-template
+      version: 4.6.0
+      sourceRef:
+        kind: HelmRepository
+        name: app-template
+  values:
+    rawResources:
+      clickhouse-credentials:
+        apiVersion: v1
+        kind: Secret
+        forceRename: clickhouse-credentials
+        annotations:
+          vault.security.banzaicloud.io/vault-addr: http://vault.vault.svc.cluster.local:8200
+          vault.security.banzaicloud.io/vault-role: default
+          vault.security.banzaicloud.io/vault-path: kubernetes
+        spec:
+          stringData:
+            COLLECTOR_PASSWORD: vault:secret/data/clickhouse/credentials#collector_password
+            DEFAULT_PASSWORD: vault:secret/data/clickhouse/credentials#default_password
+            GRAFANA_PASSWORD: vault:secret/data/clickhouse/credentials#grafana_password
+            NETAMOS_PASSWORD: vault:secret/data/clickhouse/credentials#netamos_password
+      keeper:
+        apiVersion: clickhouse.com/v1alpha1
+        kind: KeeperCluster
+        forceRename: keeper
+        spec:
+          spec:
+            replicas: 1
+            containerTemplate:
+              image:
+                repository: clickhouse/clickhouse-keeper
+                tag: 25.7.8.71-alpine
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  cpu: "1"
+                  memory: 2Gi
+            dataVolumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: standard
+              resources:
+                requests:
+                  storage: 5Gi
+            settings:
+              extraConfig:
+                listen_host: "::"
+      clickhouse:
+        apiVersion: clickhouse.com/v1alpha1
+        kind: ClickHouseCluster
+        forceRename: clickhouse
+        spec:
+          spec:
+            shards: 1
+            replicas: 1
+            keeperClusterRef:
+              name: keeper
+            containerTemplate:
+              image:
+                repository: clickhouse/clickhouse-server
+                tag: 25.7.8.71-alpine
+              env:
+                - name: OTELCOLLECTOR_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-credentials
+                      key: COLLECTOR_PASSWORD
+                - name: GRAFANA_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-credentials
+                      key: GRAFANA_PASSWORD
+                - name: NETAMOS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-credentials
+                      key: NETAMOS_PASSWORD
+              resources:
+                requests:
+                  cpu: "1"
+                  memory: 2Gi
+                limits:
+                  cpu: "4"
+                  memory: 8Gi
+            dataVolumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: standard
+              resources:
+                requests:
+                  storage: 100Gi
+            settings:
+              enableDatabaseSync: true
+              defaultUserPassword:
+                passwordType: password
+                secret:
+                  name: clickhouse-credentials
+                  key: DEFAULT_PASSWORD
+              extraConfig:
+                keep_alive_timeout: 64
+                max_concurrent_queries: 100
+                max_connections: 4096
+              extraUsersConfig:
+                users:
+                  otelcollector:
+                    password:
+                      - '@from_env': OTELCOLLECTOR_PASSWORD
+                    profile: default
+                    grants:
+                      - query: GRANT SELECT, INSERT, CREATE, SHOW ON default.*
+                  grafana:
+                    password:
+                      - '@from_env': GRAFANA_PASSWORD
+                    profile: default
+                    grants:
+                      - query: GRANT SHOW ON *.*, SELECT ON system.*, SELECT ON default.*
+                  netamos:
+                    password:
+                      - '@from_env': NETAMOS_PASSWORD
+                    profile: default
+                    grants:
+                      - query: GRANT SHOW ON *.*, SELECT ON default.*
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: telemetry-node-collector
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: telemetry-cluster-collector
+  releaseName: telemetry-node-collector
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: opentelemetry-collector
+      version: 0.146.0
+      sourceRef:
+        kind: HelmRepository
+        name: opentelemetry
+  values:
+    mode: daemonset
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: 0.146.1
+    presets:
+      logsCollection:
+        enabled: true
+        includeCollectorLogs: false
+      kubernetesAttributes:
+        enabled: true
+      kubeletMetrics:
+        enabled: true
+    ports:
+      jaeger-compact:
+        enabled: false
+      jaeger-grpc:
+        enabled: false
+      jaeger-thrift:
+        enabled: false
+      otlp:
+        enabled: false
+      otlp-http:
+        enabled: false
+      zipkin:
+        enabled: false
+    config:
+      extensions:
+        health_check:
+          endpoint: '[${env:MY_POD_IP}]:13133'
+      receivers:
+        filelog:
+          exclude:
+            - /var/log/pods/monitoring_telemetry-cluster-collector-opentelemetry-collector-*_*/opentelemetry-collector/*.log
+            - /var/log/pods/monitoring_telemetry-node-collector-opentelemetry-collector-*_*/opentelemetry-collector/*.log
+            - /var/log/pods/monitoring_clickhouse-clickhouse-*_*/clickhouse-server/*.log
+            - /var/log/pods/monitoring_keeper-keeper-*_*/clickhouse-keeper/*.log
+            - /var/log/pods/monitoring_clickhouse-operator-*_*/manager/*.log
+        jaeger: null
+        kubeletstats:
+          endpoint: '[${env:K8S_NODE_IP}]:10250'
+        otlp: null
+        prometheus: null
+        zipkin: null
+      exporters:
+        otlphttp:
+          endpoint: http://telemetry-cluster-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318
+          compression: gzip
+      service:
+        extensions:
+          - health_check
+        pipelines:
+          traces: null
+          logs:
+            receivers:
+              - filelog
+            processors:
+              - memory_limiter
+              - k8sattributes
+              - batch
+            exporters:
+              - otlphttp
+          metrics:
+            receivers:
+              - kubeletstats
+            processors:
+              - memory_limiter
+              - k8sattributes
+              - batch
+            exporters:
+              - otlphttp
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: telemetry-cluster-collector
+  namespace: flux-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: clickhouse
+  releaseName: telemetry-cluster-collector
+  targetNamespace: monitoring
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
+  chart:
+    spec:
+      chart: opentelemetry-collector
+      version: 0.146.0
+      sourceRef:
+        kind: HelmRepository
+        name: opentelemetry
+  values:
+    mode: deployment
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: 0.146.1
+    replicaCount: 1
+    extraEnvs:
+      - name: CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-credentials
+            key: COLLECTOR_PASSWORD
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        port: 13133
+        path: /
+    readinessProbe:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        port: 13133
+        path: /
+    presets:
+      clusterMetrics:
+        enabled: true
+      kubernetesAttributes:
+        enabled: true
+    ports:
+      jaeger-compact:
+        enabled: false
+      jaeger-grpc:
+        enabled: false
+      jaeger-thrift:
+        enabled: false
+      zipkin:
+        enabled: false
+    config:
+      extensions:
+        health_check:
+          endpoint: '[${env:MY_POD_IP}]:13133'
+      receivers:
+        jaeger: null
+        otlp:
+          protocols:
+            grpc:
+              endpoint: '[${env:MY_POD_IP}]:4317'
+            http:
+              endpoint: '[${env:MY_POD_IP}]:4318'
+        prometheus: null
+        zipkin: null
+        prometheus/istio:
+          config:
+            scrape_configs:
+              - job_name: istio-envoy-stats
+                scrape_interval: 15s
+                metrics_path: /stats/prometheus
+                kubernetes_sd_configs:
+                  - role: pod
+                relabel_configs:
+                  - action: keep
+                    source_labels:
+                      - __meta_kubernetes_pod_container_name
+                    regex: istio-proxy
+                  - action: drop
+                    source_labels:
+                      - __meta_kubernetes_pod_labelpresent_istio_prometheus_ignore
+                    regex: "true"
+                  - action: keep
+                    source_labels:
+                      - __meta_kubernetes_pod_annotationpresent_prometheus_io_scrape
+                  - action: replace
+                    regex: '(\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})'
+                    replacement: '[$$2]:$$1'
+                    source_labels:
+                      - __meta_kubernetes_pod_annotation_prometheus_io_port
+                      - __meta_kubernetes_pod_ip
+                    target_label: __address__
+                  - action: replace
+                    regex: '(\d+);((([0-9]+?)(\.|$$)){4})'
+                    replacement: $$2:$$1
+                    source_labels:
+                      - __meta_kubernetes_pod_annotation_prometheus_io_port
+                      - __meta_kubernetes_pod_ip
+                    target_label: __address__
+                  - action: replace
+                    source_labels:
+                      - __meta_kubernetes_namespace
+                    target_label: namespace
+                  - action: replace
+                    source_labels:
+                      - __meta_kubernetes_pod_name
+                    target_label: pod
+                metric_relabel_configs:
+                  - action: keep
+                    source_labels:
+                      - __name__
+                    regex: istio_requests_total|istio_request_duration_milliseconds_(bucket|sum|count)|istio_tcp_received_bytes_total|istio_tcp_sent_bytes_total
+      exporters:
+        clickhouse:
+          endpoint: tcp://clickhouse-clickhouse-headless.monitoring.svc.cluster.local:9000?dial_timeout=10s
+          database: default
+          username: otelcollector
+          password: ${env:CLICKHOUSE_PASSWORD}
+          ttl: 720h
+          create_schema: true
+          async_insert: true
+          compress: lz4
+          timeout: 10s
+          retry_on_failure:
+            enabled: true
+            initial_interval: 5s
+            max_interval: 30s
+            max_elapsed_time: 300s
+      service:
+        extensions:
+          - health_check
+        pipelines:
+          logs:
+            receivers:
+              - otlp
+            processors:
+              - memory_limiter
+              - batch
+            exporters:
+              - clickhouse
+          traces:
+            receivers:
+              - otlp
+            processors:
+              - memory_limiter
+              - batch
+            exporters:
+              - clickhouse
+          metrics:
+            receivers:
+              - otlp
+              - k8s_cluster
+              - prometheus/istio
+            processors:
+              - memory_limiter
+              - k8sattributes
+              - batch
+            exporters:
+              - clickhouse
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
