@@ -40,6 +40,15 @@ secrets:
   secret/kiali/oauth:
     client_secret:
       type: random
+  secret/clickhouse/credentials:
+    collector_password:
+      type: random
+    default_password:
+      type: random
+    grafana_password:
+      type: random
+    netamos_password:
+      type: random
   secret/actualbudget/auth:
     client_secret:
       type: random
@@ -94,6 +103,22 @@ backups:
         runAsGroup: 0
         runAsUser: 0
 vendors:
+  vendor/charts/clickhouse-operator:
+    kind: chart
+    ref: oci://ghcr.io/clickhouse/clickhouse-operator-helm
+    versions:
+      - 0.0.6
+  vendor/charts/opentelemetry-collector:
+    kind: chart
+    repo_url: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-collector
+    versions:
+      - 0.146.0
+  vendor/images/clickhouse/clickhouse-operator:
+    kind: image
+    source: ghcr.io/clickhouse/clickhouse-operator
+    versions:
+      - v0.0.6
   vendor/charts/app-template:
     kind: chart
     ref: oci://ghcr.io/bjw-s-labs/helm/app-template
